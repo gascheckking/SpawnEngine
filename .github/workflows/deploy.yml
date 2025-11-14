@@ -21,7 +21,7 @@ jobs:
           node-version: 20
 
       - name: Install
-        run: npm ci
+        run: npm install
 
       - name: Compile
         run: npm run build
@@ -50,4 +50,3 @@ jobs:
           CREATOR_WALLET: ${{ secrets.CREATOR_WALLET }}
         run: |
           npx hardhat run scripts/deploySeries.ts --network baseSepolia
-
