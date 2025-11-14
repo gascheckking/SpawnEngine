@@ -1,1 +1,53 @@
+name: Deploy Contracts (Base Sepolia)
+
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_demo_series:
+        description: "Also deploy demo TokenPackSeries (yes/no)"
+        required: true
+        default: "no"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install
+        run: npm ci
+
+      - name: Compile
+        run: npm run build
+
+      - name: Deploy Guard & Factory
+        env:
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          PLATFORM_FEE_RECIPIENT: ${{ secrets.PLATFORM_FEE_RECIPIENT }}
+        run: |
+          npx hardhat run scripts/deploy.ts --network baseSepolia | tee deploy.log
+          echo "GUARD=$(grep -i 'ReserveGuard:' deploy.log | awk '{print $2}')" >> $GITHUB_ENV
+          echo "FACTORY=$(grep -i 'PackFactory' deploy.log | awk '{print $2}')" >> $GITHUB_ENV
+          echo "Guard: $GUARD"
+          echo "Factory: $FACTORY"
+
+      - name: Deploy Demo TokenPackSeries (optional)
+        if: ${{ github.event.inputs.deploy_demo_series == 'yes' }}
+        env:
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          FACTORY: ${{ env.FACTORY }}
+          GUARD: ${{ env.GUARD }}
+          PAYOUT_TOKEN: ${{ secrets.PAYOUT_TOKEN }}
+          PACK_PRICE_WEI: ${{ secrets.PACK_PRICE_WEI }}
+          CREATOR_WALLET: ${{ secrets.CREATOR_WALLET }}
+        run: |
+          npx hardhat run scripts/deploySeries.ts --network baseSepolia
 
