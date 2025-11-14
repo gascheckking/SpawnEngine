@@ -1,1 +1,99 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Create Series — Spawniz Pack Engine</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body{font-family:system-ui,Arial;margin:24px;max-width:760px}
+    input,button{padding:10px;border:1px solid #ddd;border-radius:8px}
+    .row{display:flex;gap:8px;align-items:center;margin:10px 0}
+    .card{border:1px solid #eee;border-radius:12px;padding:16px;margin:12px 0}
+    label{min-width:160px}
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+  </style>
+</head>
+<body>
+  <h1>Create Token Pack Series</h1>
+  <p>Connect wallet → fill fields → Deploy via <span class="mono">PackFactory.deployTokenSeries()</span>.</p>
+
+  <div class="card">
+    <div class="row">
+      <button id="connect">Connect Wallet</button>
+      <span id="addr"></span>
+    </div>
+    <div class="row">
+      <label>Factory address</label>
+      <input id="factory" placeholder="0x...PackFactory">
+    </div>
+    <div class="row">
+      <label>ReserveGuard address</label>
+      <input id="guard" placeholder="0x...ReserveGuard">
+    </div>
+    <div class="row">
+      <label>Payout ERC20</label>
+      <input id="token" placeholder="0x...ERC20">
+    </div>
+    <div class="row">
+      <label>Pack price (raw wei)</label>
+      <input id="price" placeholder="1000000000000000000">
+    </div>
+    <div class="row">
+      <label>Creator recipient</label>
+      <input id="creator" placeholder="0x...creator wallet">
+    </div>
+    <div class="row">
+      <button id="deploy">Deploy Series</button>
+    </div>
+    <div id="out"></div>
+  </div>
+
+  <script type="module">
+    import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.11.1/dist/ethers.min.js";
+    let signer; const $ = id => document.getElementById(id);
+
+    const factoryAbi = [
+      "function deployTokenSeries(address payoutToken,uint256 packPrice,address creatorRecipient,address reserveGuard) returns (address)",
+      "event SeriesDeployed(address series, address creator, address payoutToken, uint256 packPrice, address reserveGuard)"
+    ];
+
+    $("connect").onclick = async () => {
+      if (!window.ethereum) return alert("Install a wallet");
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      signer = await provider.getSigner();
+      const addr = await signer.getAddress();
+      $("addr").textContent = addr.slice(0,6)+"…"+addr.slice(-4);
+    };
+
+    $("deploy").onclick = async () => {
+      try {
+        const f = new ethers.Contract($("factory").value.trim(), factoryAbi, signer);
+        const tx = await f.deployTokenSeries(
+          $("token").value.trim(),
+          BigInt($("price").value.trim()),
+          $("creator").value.trim(),
+          $("guard").value.trim()
+        );
+        $("out").textContent = "Deploying… " + tx.hash;
+        const rc = await tx.wait();
+        const ev = rc.logs.find(l => l.fragment?.name === "SeriesDeployed");
+        if (ev) {
+          $("out").innerHTML = `
+            <div>✓ Deployed: <b>${ev.args[0]}</b></div>
+            <div>creator: ${ev.args[1]}</div>
+            <div>payoutToken: ${ev.args[2]}</div>
+            <div>packPrice: ${ev.args[3].toString()}</div>
+            <div>guard: ${ev.args[4]}</div>
+            <p>Open <a href="./index.html">Open UI</a> and paste the series address.</p>
+          `;
+        } else {
+          $("out").textContent = "Deployed (check explorer logs for SeriesDeployed).";
+        }
+      } catch (e) {
+        $("out").textContent = "Deploy failed: "+(e?.message||e);
+      }
+    };
+  </script>
+</body>
+</html>
 
