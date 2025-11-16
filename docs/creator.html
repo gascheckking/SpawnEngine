@@ -48,6 +48,11 @@
     <div id="out"></div>
   </div>
 
+  <p>
+    After deployment, open <a href="../index.html">SpawnEngine UI</a> and paste
+    the <code>TokenPackSeries</code> address.
+  </p>
+
   <script type="module">
     import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.11.1/dist/ethers.min.js";
     let signer; const $ = id => document.getElementById(id);
@@ -84,7 +89,6 @@
             <div>payoutToken: ${ev.args[2]}</div>
             <div>packPrice: ${ev.args[3].toString()}</div>
             <div>guard: ${ev.args[4]}</div>
-            <p>Open <a href="./index.html">Open UI</a> and paste the series address.</p>
           `;
         } else {
           $("out").textContent = "Deployed (check explorer logs for SeriesDeployed).";
@@ -96,4 +100,3 @@
   </script>
 </body>
 </html>
-
