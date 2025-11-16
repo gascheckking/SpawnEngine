@@ -19,4 +19,3 @@ contract UtilityPackRouter {
         emit XpGranted(to, amount);
     }
 }
-
