@@ -1,6 +1,8 @@
 // SpawnEngine/api/wield/[...path].js
 
-module.exports = async function handler(req, res) {
+import { NextApiRequest, NextApiResponse } from 'next';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const apiKey = process.env.WIELD_API_KEY;
     if (!apiKey) {
@@ -47,5 +49,4 @@ module.exports = async function handler(req, res) {
     console.error("Wield proxy error:", err);
     res.status(500).json({ error: "Proxy error", detail: String(err) });
   }
-};
-
+}
