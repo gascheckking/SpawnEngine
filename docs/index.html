@@ -1,234 +1,111 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>SpawnEngine — Onchain RIP/HOLD/Trade</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="/style.css" />
+  <meta charset="utf-8">
+  <title>SpawnEngine Viewer</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body{font-family:system-ui,Arial;margin:24px;max-width:780px}
+    input,button{padding:10px;border:1px solid #ddd;border-radius:8px}
+    .row{display:flex;gap:8px;align-items:center;margin:10px 0}
+    .card{border:1px solid #eee;border-radius:12px;padding:16px;margin:12px 0}
+    pre{background:#111;color:#0f0;padding:12px;border-radius:8px;font-size:12px;overflow:auto}
+  </style>
 </head>
 <body>
-  <div class="app-shell">
-    <!-- HEADER -->
-    <header class="app-header">
-      <div class="brand">
-        <div class="brand-logo">TTS</div>
-        <div class="brand-copy">
-          <h1>TTS – Onchain Swap/Trade</h1>
-          <p>Spawn Engine for packs, pulls & onchain collectors</p>
-        </div>
-      </div>
+  <h1>SpawnEngine — Simple Series Viewer</h1>
+  <p>
+    Paste a <code>TokenPackSeries</code> address, connect wallet and call
+    <code>buy()</code> / <code>open()</code> directly.
+  </p>
 
-      <div class="header-right">
-        <div class="network-pill">Base · Vibechain style</div>
-        <button id="walletButton" class="btn-primary">
-          Connect Wallet
-        </button>
-      </div>
-    </header>
-
-    <!-- LIVE TICKER -->
-    <section class="ticker-bar">
-      <div class="ticker-label">Live pulls</div>
-      <div class="ticker-track">
-        <div id="tickerContent" class="ticker-content">
-          Loading recent pulls…
-        </div>
-      </div>
-    </section>
-
-    <!-- STATUS STRIP -->
-    <section class="status-strip">
-      <div class="status-chip" id="status-wallet">Wallet: Not connected</div>
-      <div class="status-chip" id="status-api">Wield API: Unknown</div>
-      <div class="status-chip" id="status-sync">Sync: –</div>
-    </section>
-
-    <!-- TABS -->
-    <nav class="tab-bar">
-      <button class="tab-button active" data-tab="trading">Trading</button>
-      <button class="tab-button" data-tab="for-trade">For Trade</button>
-      <button class="tab-button" data-tab="overview">Overview</button>
-      <button class="tab-button" data-tab="activity">Activity</button>
-      <button class="tab-button" data-tab="creators">Creators</button>
-      <button class="tab-button" data-tab="chat">Bubble / Chat</button>
-      <button class="tab-button" data-tab="settings">Settings</button>
-    </nav>
-
-    <!-- MAIN VIEWS -->
-    <main class="view-container">
-      <!-- TRADING -->
-      <section id="view-trading" class="view active">
-        <div class="view-header">
-          <h2>Pack Trading</h2>
-          <p>Open, collect & trade packs synced with Vibe-style markets via Wield.</p>
-        </div>
-
-        <div class="filter-row">
-          <button class="filter-chip active" data-packfilter="all">All packs</button>
-          <button class="filter-chip" data-packfilter="new">New</button>
-          <button class="filter-chip" data-packfilter="verified">Verified</button>
-        </div>
-
-        <div id="tradingCards" class="card-grid">
-          <!-- packs injected här -->
-        </div>
-      </section>
-
-      <!-- FOR TRADE -->
-      <section id="view-for-trade" class="view">
-        <div class="view-header">
-          <h2>My Packs / For Trade</h2>
-          <p>Packs in your wallet, ready to list or swap.</p>
-        </div>
-
-        <div id="forTradeList" class="card-grid compact">
-          <p class="muted">
-            Connect a wallet to fetch your packs via Wield pulls endpoint.
-          </p>
-        </div>
-      </section>
-
-      <!-- OVERVIEW -->
-      <section id="view-overview" class="view">
-        <div class="view-header">
-          <h2>Onchain Overview</h2>
-          <p>Earnings, spends, gas usage & PnL snapshot.</p>
-        </div>
-
-        <div class="metric-grid" id="overviewMetrics">
-          <!-- metrics cards -->
-        </div>
-
-        <div class="panel">
-          <h3>Strategy: Treat packs like sealed assets</h3>
-          <p>
-            Buy early, hold sealed, sell when supply shrinks and bounties +
-            hype push prices up. Spawn Engine visualiserar det åt dig.
-          </p>
-        </div>
-
-        <div class="panel">
-          <h3>Creator earnings (Spawn Engine vs fees)</h3>
-          <p>
-            TTS är designad för att ge creators <strong>10–50% earnings cut</strong> istället
-            för klassiska höga marketplace-fees. Själva spliten styrs on-chain i
-            dina kontrakt (PackFactory / TokenPackSeries), den här appen visar
-            bara datan och fördelningen.
-          </p>
-        </div>
-      </section>
-
-      <!-- ACTIVITY -->
-      <section id="view-activity" class="view">
-        <div class="view-header">
-          <h2>Recent Activity</h2>
-          <p>Live pulls, big bounties, snipes & sealed pack flips.</p>
-        </div>
-        <div id="activityFeed" class="activity-list">
-          <!-- pulls -->
-        </div>
-      </section>
-
-      <!-- CREATORS -->
-      <section id="view-creators" class="view">
-        <div class="view-header">
-          <h2>Verified Creators</h2>
-          <p>
-            Creators med verified packs – auto-samlas från Wield API
-            <span class="tag">auto</span>
-          </p>
-        </div>
-        <div id="creatorList" class="creator-grid">
-          <!-- creators -->
-        </div>
-      </section>
-
-      <!-- CHAT -->
-      <section id="view-chat" class="view">
-        <div class="view-header">
-          <h2>Wallet Bubbles / Chat</h2>
-          <p>Planerad funktion – UI redo för future Farcaster / wallet-chat.</p>
-        </div>
-
-        <div class="bubble-layout">
-          <div class="bubble-column">
-            <div class="wallet-bubble ghost">
-              <div class="wallet-id">0xfeet…sn1ff</div>
-              <p>“Just pulled a Legendary Foil Realms…”</p>
-            </div>
-            <div class="wallet-bubble ghost">
-              <div class="wallet-id">0x1234…abcd</div>
-              <p>“Buying any sealed Tiny Legends under $5.”</p>
-            </div>
-          </div>
-          <div class="bubble-column">
-            <div class="chat-panel">
-              <div class="chat-messages">
-                <div class="msg ghost">
-                  <span class="msg-from">you · 0x…</span>
-                  <span class="msg-text">
-                    Wallet-to-wallet chat kommer här – kopplat till Spawn Engine.
-                  </span>
-                </div>
-              </div>
-              <div class="chat-input-row">
-                <input type="text" placeholder="Soon: DM a wallet directly…" disabled />
-                <button class="btn-primary" disabled>Send</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- SETTINGS -->
-      <section id="view-settings" class="view">
-        <div class="view-header">
-          <h2>Settings</h2>
-          <p>Wallet, API-proxy & theme. Inga fler låsta views här.</p>
-        </div>
-
-        <div class="panel">
-          <h3>Wallet</h3>
-          <p id="settingsWalletStatus">Not connected.</p>
-          <div class="button-row">
-            <button id="settingsConnect" class="btn-primary">Connect / Switch</button>
-            <button id="settingsDisconnect" class="btn-ghost">Disconnect</button>
-          </div>
-        </div>
-
-        <div class="panel">
-          <h3>Wield API Proxy</h3>
-          <p>
-            Requests går via <code>/api/wield/*</code> så att din
-            <code>WIELD_API_KEY</code> aldrig syns i klienten.
-          </p>
-          <p id="settingsApiStatus" class="muted">Status: checking…</p>
-        </div>
-
-        <div class="panel">
-          <h3>Theme</h3>
-          <p>Dark Comic mode är standard. Light mode kan läggas till senare.</p>
-          <div class="theme-preview-row">
-            <div class="theme-preview theme-dark active">
-              <span>Dark · Spawn</span>
-            </div>
-            <div class="theme-preview theme-light disabled">
-              <span>Soon™</span>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="app-footer">
-      <p>
-        Built with <span class="spawn-spark">Spawn Engine</span> ·
-        TTS – Onchain Swap/Trade · Powered by Wield API
-      </p>
-    </footer>
+  <div class="card">
+    <div class="row">
+      <button id="connect">Connect Wallet</button>
+      <span id="addr"></span>
+    </div>
+    <div class="row">
+      <label style="min-width:140px">Series</label>
+      <input id="seriesAddr" placeholder="0x...TokenPackSeries" style="flex:1">
+    </div>
+    <div class="row">
+      <label style="min-width:140px">Qty to buy</label>
+      <input id="qty" value="1" style="width:120px">
+    </div>
+    <div class="row">
+      <button id="btnBuy">Buy Packs</button>
+      <button id="btnOpen">Open #1</button>
+    </div>
+    <pre id="log"></pre>
   </div>
 
-  <script src="/app.js"></script>
+  <p>
+    For full Vibe-style marketplace view, go back to
+    <a href="../index.html">SpawnEngine main app</a>.
+  </p>
+
+  <script type="module">
+    import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.11.1/dist/ethers.min.js";
+    let signer, series;
+    const $ = id => document.getElementById(id);
+
+    const abi = [
+      "function packPrice() view returns (uint256)",
+      "function payoutToken() view returns (address)",
+      "function buy(uint256 qty)",
+      "function open(uint256 tokenId)",
+      "function nextId() view returns (uint256)"
+    ];
+
+    function log(msg) {
+      $("log").textContent += msg + "\n";
+    }
+
+    $("connect").onclick = async () => {
+      if (!window.ethereum) return alert("Install wallet");
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      signer = await provider.getSigner();
+      const addr = await signer.getAddress();
+      $("addr").textContent = addr.slice(0,6)+"…"+addr.slice(-4);
+      log("Connected: " + addr);
+    };
+
+    function getSeries() {
+      const addr = $("seriesAddr").value.trim();
+      if (!addr) throw new Error("Missing series address");
+      return new ethers.Contract(addr, abi, signer);
+    }
+
+    $("btnBuy").onclick = async () => {
+      try {
+        series = getSeries();
+        const qty = BigInt($("qty").value || "1");
+        const price = await series.packPrice();
+        const total = price * qty;
+        log("Buying " + qty + " packs, cost = " + total.toString());
+        const tx = await series.buy(qty);
+        log("buy() tx: " + tx.hash);
+        await tx.wait();
+        log("✓ buy() confirmed");
+      } catch (e) {
+        log("Error: " + (e?.message || e));
+      }
+    };
+
+    $("btnOpen").onclick = async () => {
+      try {
+        series = getSeries();
+        const nextId = await series.nextId();
+        const tokenId = nextId - 1n; // open latest
+        log("Opening tokenId " + tokenId.toString());
+        const tx = await series.open(tokenId);
+        log("open() tx: " + tx.hash);
+        await tx.wait();
+        log("✓ open() confirmed");
+      } catch (e) {
+        log("Error: " + (e?.message || e));
+      }
+    };
+  </script>
 </body>
 </html>
