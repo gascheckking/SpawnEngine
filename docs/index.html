@@ -1,264 +1,234 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Spawniz Pack Engine — Mobile Tabs</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    :root{--bg:#0b0d10;--card:#12151a;--text:#e9eef4;--muted:#98a2ad;--accent:#5ee3ff;--ok:#27d07d;--err:#ff5b5b;--warn:#ffb042}
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Arial}
-    header{padding:14px 16px;border-bottom:1px solid #1a1f27}
-    h1{margin:0;font-size:18px}
-    .tabs{position:sticky;top:0;display:flex;gap:6px;overflow:auto;padding:8px;border-bottom:1px solid #1a1f27;background:var(--bg)}
-    .tab{flex:0 0 auto;padding:10px 12px;border:1px solid #1f2630;border-radius:10px;color:var(--muted);background:var(--card);font-size:14px}
-    .tab.active{color:#111;background:var(--accent);border-color:transparent;font-weight:600}
-    .screen{display:none;padding:14px}
-    .screen.active{display:block}
-    .card{background:var(--card);border:1px solid #1a1f27;border-radius:12px;padding:14px;margin:10px 0}
-    .row{display:flex;gap:10px;align-items:center;margin:10px 0}
-    input,button{width:100%;padding:12px;border-radius:10px;border:1px solid #27303a;background:#0e1217;color:var(--text);font-size:15px}
-    button{background:#0f1722;border-color:#2a3440} button.primary{background:var(--accent);color:#071017;border:none}
-    small{color:var(--muted)} code{background:#0d141b;border:1px solid #1c242e;padding:2px 6px;border-radius:6px}
-    .kpi{display:flex;gap:10px;flex-wrap:wrap}
-    .pill{padding:8px 10px;border-radius:999px;background:#0f1520;border:1px solid #22303a;color:var(--muted);font-size:12px}
-    .ok{color:var(--ok)} .err{color:var(--err)} .warn{color:var(--warn)}
-    a{color:var(--accent);text-decoration:none}
-  </style>
+  <meta charset="UTF-8" />
+  <title>TTS – Onchain Swap/Trade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <header><h1>Spawniz Pack Engine</h1><small>Mobile MVP · Base Sepolia</small></header>
-
-  <nav class="tabs" id="tabs">
-    <button class="tab active" data-t="connect">Connect</button>
-    <button class="tab" data-t="series">Series</button>
-    <button class="tab" data-t="buy">Buy</button>
-    <button class="tab" data-t="open">Open</button>
-    <button class="tab" data-t="burn">Burn</button>
-    <button class="tab" data-t="status">Status</button>
-  </nav>
-
-  <!-- CONNECT -->
-  <section class="screen active" id="connect">
-    <div class="card">
-      <div class="row"><button class="primary" id="btnConnect">Connect Wallet</button></div>
-      <div id="who"></div>
-      <div class="row"><a href="./creator.html">Creator: deploy new series →</a></div>
-    </div>
-  </section>
-
-  <!-- SERIES -->
-  <section class="screen" id="series">
-    <div class="card">
-      <div class="row"><input id="seriesAddr" placeholder="0x...TokenPackSeries"></div>
-      <div class="row"><button class="primary" id="btnLoad">Load Series</button></div>
-      <div id="seriesInfo"></div>
-    </div>
-  </section>
-
-  <!-- BUY -->
-  <section class="screen" id="buy">
-    <div class="card">
-      <div class="row"><input id="qty" type="number" min="1" value="1"></div>
-      <div class="row"><button class="primary" id="btnBuy">Buy Packs</button></div>
-      <small>Approve will auto-run if needed.</small>
-      <div id="buyOut"></div>
-    </div>
-  </section>
-
-  <!-- OPEN -->
-  <section class="screen" id="open">
-    <div class="card">
-      <div class="row"><input id="tokenId" placeholder="tokenId"></div>
-      <div class="row"><button class="primary" id="btnOpen">Open Pack</button></div>
-      <div id="openOut"></div>
-    </div>
-  </section>
-
-  <!-- BURN -->
-  <section class="screen" id="burn">
-    <div class="card">
-      <h3 style="margin:0 0 8px">Burn / Gamble</h3>
-      <small>Requires opened tokens of specific rarity.</small>
-      <div class="row"><input id="burnCommonsIds" placeholder="5 common tokenIds, comma-separated"></div>
-      <div class="row"><button id="btnBurnCommons">Burn 5 Commons → 20% → mint 2</button></div>
-      <div class="row"><input id="burnRareId" placeholder="rare tokenId"></div>
-      <div class="row"><button id="btnBurnRare">Burn 1 Rare → 30% → mint 2</button></div>
-      <div class="row"><input id="burnLegId" placeholder="legendary tokenId"></div>
-      <div class="row"><button id="btnBurnLeg">Burn 1 Legendary → 40% → mint 5</button></div>
-      <div class="row"><input id="burnMythId" placeholder="mythic tokenId"></div>
-      <div class="row"><button id="btnBurnMyth">Burn 1 Mythic → 45% → mint 10</button></div>
-      <div id="burnOut"></div>
-    </div>
-  </section>
-
-  <!-- STATUS -->
-  <section class="screen" id="status">
-    <div class="card">
-      <div class="kpi">
-        <span class="pill" id="pToken">token: —</span>
-        <span class="pill" id="pPrice">price: —</span>
-        <span class="pill" id="pEscrow">escrow: —</span>
-        <span class="pill" id="pReserve">reserve: —</span>
+  <div class="app-shell">
+    <!-- HEADER -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-logo">TTS</div>
+        <div class="brand-copy">
+          <h1>TTS – Onchain Swap/Trade</h1>
+          <p>Spawn Engine for packs, pulls & onchain collectors</p>
+        </div>
       </div>
-      <div style="margin-top:10px" id="log"></div>
-    </div>
-  </section>
 
-  <script type="module">
-    import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.11.1/dist/ethers.min.js";
+      <div class="header-right">
+        <div class="network-pill">Base · Vibechain style</div>
+        <button id="walletButton" class="btn-primary">
+          Connect Wallet
+        </button>
+      </div>
+    </header>
 
-    const abi = [
-      "function payoutToken() view returns (address)",
-      "function packPrice() view returns (uint256)",
-      "function creator() view returns (address)",
-      "function platform() view returns (address)",
-      "function escrow() view returns (uint256)",
-      "function canOpen() view returns (bool)",
-      "function buy(uint256 qty)",
-      "function open(uint256 tokenId)",
-      "function rarityOf(uint256 tokenId) view returns (uint8)",
-      "function burnCommonsForTwo(uint256[] tokenIds)",
-      "function burnRareForTwo(uint256 tokenId)",
-      "function burnLegendaryForFive(uint256 tokenId)",
-      "function burnMythicForTen(uint256 tokenId)",
-      "event PackBought(address indexed buyer, uint256 tokenId)",
-      "event PackOpened(address indexed opener, uint256 tokenId, uint256 multiplier, uint256 payout, uint8 rarity)"
-    ];
-    const erc20 = [
-      "function approve(address spender, uint256 amount) external returns (bool)",
-      "function allowance(address owner, address spender) view returns (uint256)",
-      "function balanceOf(address) view returns (uint256)",
-      "function decimals() view returns (uint8)"
-    ];
+    <!-- LIVE TICKER -->
+    <section class="ticker-bar">
+      <div class="ticker-label">Live pulls</div>
+      <div class="ticker-track">
+        <div id="tickerContent" class="ticker-content">
+          Loading recent pulls…
+        </div>
+      </div>
+    </section>
 
-    // Tabs
-    const tabs = document.querySelectorAll('.tab');
-    const screens = document.querySelectorAll('.screen');
-    tabs.forEach(t => t.onclick = () => {
-      tabs.forEach(x => x.classList.remove('active'));
-      screens.forEach(s => s.classList.remove('active'));
-      t.classList.add('active');
-      document.getElementById(t.dataset.t).classList.add('active');
-    });
+    <!-- STATUS STRIP -->
+    <section class="status-strip">
+      <div class="status-chip" id="status-wallet">Wallet: Not connected</div>
+      <div class="status-chip" id="status-api">Wield API: Unknown</div>
+      <div class="status-chip" id="status-sync">Sync: –</div>
+    </section>
 
-    // State
-    let provider, signer, account, series, token, decimals, contract;
+    <!-- TABS -->
+    <nav class="tab-bar">
+      <button class="tab-button active" data-tab="trading">Trading</button>
+      <button class="tab-button" data-tab="for-trade">For Trade</button>
+      <button class="tab-button" data-tab="overview">Overview</button>
+      <button class="tab-button" data-tab="activity">Activity</button>
+      <button class="tab-button" data-tab="creators">Creators</button>
+      <button class="tab-button" data-tab="chat">Bubble / Chat</button>
+      <button class="tab-button" data-tab="settings">Settings</button>
+    </nav>
 
-    const $ = id => document.getElementById(id);
-    const log = (m)=> $("log").insertAdjacentHTML('afterbegin', `<div><small>${m}</small></div>`);
-    const rarityName = c => c===1?'Common':c===2?'Rare':c===3?'Legendary':c===4?'Mythic':'—';
+    <!-- MAIN VIEWS -->
+    <main class="view-container">
+      <!-- TRADING -->
+      <section id="view-trading" class="view active">
+        <div class="view-header">
+          <h2>Pack Trading</h2>
+          <p>Open, collect & trade packs synced with Vibe-style markets via Wield.</p>
+        </div>
 
-    // Connect
-    $("btnConnect").onclick = async () => {
-      if (!window.ethereum) return alert("Install a wallet");
-      provider = new ethers.BrowserProvider(window.ethereum);
-      signer = await provider.getSigner();
-      account = await signer.getAddress();
-      $("who").innerHTML = `<div class="pill">Wallet: ${account.slice(0,6)}…${account.slice(-4)}</div>`;
-      tabs[1].click(); // jump to Series
-    };
+        <div class="filter-row">
+          <button class="filter-chip active" data-packfilter="all">All packs</button>
+          <button class="filter-chip" data-packfilter="new">New</button>
+          <button class="filter-chip" data-packfilter="verified">Verified</button>
+        </div>
 
-    // Load series
-    $("btnLoad").onclick = async () => {
-      try {
-        series = $("seriesAddr").value.trim();
-        contract = new ethers.Contract(series, abi, signer);
-        const tokenAddr = await contract.payoutToken();
-        token = new ethers.Contract(tokenAddr, erc20, signer);
-        decimals = await token.decimals();
-        const price = await contract.packPrice();
-        const creator = await contract.creator();
-        const platform = await contract.platform();
-        const escrow = await contract.escrow();
-        const can = await contract.canOpen();
+        <div id="tradingCards" class="card-grid">
+          <!-- packs injected här -->
+        </div>
+      </section>
 
-        $("seriesInfo").innerHTML = `
-          <div class="pill">creator: ${creator.slice(0,6)}…${creator.slice(-4)}</div>
-          <div class="pill">platform: ${platform.slice(0,6)}…${platform.slice(-4)}</div>
-          <div class="pill">token: ${tokenAddr.slice(0,6)}…${tokenAddr.slice(-4)}</div>
-        `;
-        $("pToken").textContent = "token: "+tokenAddr.slice(0,6)+"…"+tokenAddr.slice(-4);
-        $("pPrice").textContent = "price: "+ethers.formatUnits(price, decimals);
-        $("pEscrow").textContent = "escrow: "+ethers.formatUnits(escrow, decimals);
-        $("pReserve").innerHTML = "reserve: " + (can ? '<span class="ok">OK</span>' : '<span class="err">LOW</span>');
-        tabs[2].click(); // jump to Buy
-      } catch(e){ $("seriesInfo").innerHTML = `<span class="err">${e?.message||e}</span>`; }
-    };
+      <!-- FOR TRADE -->
+      <section id="view-for-trade" class="view">
+        <div class="view-header">
+          <h2>My Packs / For Trade</h2>
+          <p>Packs in your wallet, ready to list or swap.</p>
+        </div>
 
-    // Buy
-    $("btnBuy").onclick = async () => {
-      try {
-        const qty = BigInt(parseInt($("qty").value||"1",10));
-        const price = await contract.packPrice();
-        const cost = price * qty;
-        const allowance = await token.allowance(account, contract.target);
-        if (allowance < cost) {
-          const tx1 = await token.approve(contract.target, cost);
-          await tx1.wait();
-        }
-        const tx2 = await contract.buy(Number(qty));
-        await tx2.wait();
-        $("buyOut").innerHTML = `<div class="pill">✓ Bought ${qty} pack(s)</div>`;
-        log("Bought packs");
-      } catch(e){ $("buyOut").innerHTML = `<span class="err">${e?.message||e}</span>`; }
-    };
+        <div id="forTradeList" class="card-grid compact">
+          <p class="muted">
+            Connect a wallet to fetch your packs via Wield pulls endpoint.
+          </p>
+        </div>
+      </section>
 
-    // Open
-    $("btnOpen").onclick = async () => {
-      try {
-        const id = BigInt($("tokenId").value);
-        const tx = await contract.open(id);
-        const rc = await tx.wait();
-        const ev = rc.logs.find(l => l.fragment?.name === "PackOpened");
-        if (ev){
-          const [, tokenId, mult, payout, rarity] = ev.args;
-          $("openOut").innerHTML = `<div class="pill">#${tokenId} → ${rarityName(Number(rarity))} · ${Number(mult)/1e18}×</div><small>payout (raw): ${payout.toString()}</small>`;
-          log("Opened pack #"+tokenId);
-          tabs[5].click(); // Status
-        } else {
-          $("openOut").textContent = "Opened (no event decoded)";
-        }
-      } catch(e){ $("openOut").innerHTML = `<span class="err">${e?.message||e}</span>`; }
-    };
+      <!-- OVERVIEW -->
+      <section id="view-overview" class="view">
+        <div class="view-header">
+          <h2>Onchain Overview</h2>
+          <p>Earnings, spends, gas usage & PnL snapshot.</p>
+        </div>
 
-    // Burn
-    $("btnBurnCommons").onclick = async () => {
-      try {
-        const ids = $("burnCommonsIds").value.split(",").map(s=>BigInt(s.trim())).filter(Boolean);
-        const tx = await contract.burnCommonsForTwo(ids);
-        await tx.wait();
-        $("burnOut").innerHTML = `<div class="pill">Burned ${ids.length} commons → check wallet for new packs</div>`;
-        log("Burned commons");
-      } catch(e){ $("burnOut").innerHTML = `<span class="err">${e?.message||e}</span>`; }
-    };
-    $("btnBurnRare").onclick = async () => {
-      try {
-        const id = BigInt($("burnRareId").value);
-        const tx = await contract.burnRareForTwo(id);
-        await tx.wait();
-        $("burnOut").innerHTML = `<div class="pill">Burned rare #${id} → check wallet</div>`;
-        log("Burned rare");
-      } catch(e){ $("burnOut").innerHTML = `<span class="err">${e?.message||e}</span>`; }
-    };
-    $("btnBurnLeg").onclick = async () => {
-      try {
-        const id = BigInt($("burnLegId").value);
-        const tx = await contract.burnLegendaryForFive(id);
-        await tx.wait();
-        $("burnOut").innerHTML = `<div class="pill">Burned legendary #${id} → check wallet</div>`;
-        log("Burned legendary");
-      } catch(e){ $("burnOut").innerHTML = `<span class="err">${e?.message||e}</span>`; }
-    };
-    $("btnBurnMyth").onclick = async () => {
-      try {
-        const id = BigInt($("burnMythId").value);
-        const tx = await contract.burnMythicForTen(id);
-        await tx.wait();
-        $("burnOut").innerHTML = `<div class="pill">Burned mythic #${id} → check wallet</div>`;
-        log("Burned mythic");
-      } catch(e){ $("burnOut").innerHTML = `<span class="err">${e?.message||e}</span>`; }
-    };
-  </script>
+        <div class="metric-grid" id="overviewMetrics">
+          <!-- metrics cards -->
+        </div>
+
+        <div class="panel">
+          <h3>Strategy: Treat packs like sealed assets</h3>
+          <p>
+            Buy early, hold sealed, sell when supply shrinks and bounties +
+            hype push prices up. Spawn Engine visualiserar det åt dig.
+          </p>
+        </div>
+
+        <div class="panel">
+          <h3>Creator earnings (Spawn Engine vs fees)</h3>
+          <p>
+            TTS är designad för att ge creators <strong>10–50% earnings cut</strong> istället
+            för klassiska höga marketplace-fees. Själva spliten styrs on-chain i
+            dina kontrakt (PackFactory / TokenPackSeries), den här appen visar
+            bara datan och fördelningen.
+          </p>
+        </div>
+      </section>
+
+      <!-- ACTIVITY -->
+      <section id="view-activity" class="view">
+        <div class="view-header">
+          <h2>Recent Activity</h2>
+          <p>Live pulls, big bounties, snipes & sealed pack flips.</p>
+        </div>
+        <div id="activityFeed" class="activity-list">
+          <!-- pulls -->
+        </div>
+      </section>
+
+      <!-- CREATORS -->
+      <section id="view-creators" class="view">
+        <div class="view-header">
+          <h2>Verified Creators</h2>
+          <p>
+            Creators med verified packs – auto-samlas från Wield API
+            <span class="tag">auto</span>
+          </p>
+        </div>
+        <div id="creatorList" class="creator-grid">
+          <!-- creators -->
+        </div>
+      </section>
+
+      <!-- CHAT -->
+      <section id="view-chat" class="view">
+        <div class="view-header">
+          <h2>Wallet Bubbles / Chat</h2>
+          <p>Planerad funktion – UI redo för future Farcaster / wallet-chat.</p>
+        </div>
+
+        <div class="bubble-layout">
+          <div class="bubble-column">
+            <div class="wallet-bubble ghost">
+              <div class="wallet-id">0xfeet…sn1ff</div>
+              <p>“Just pulled a Legendary Foil Realms…”</p>
+            </div>
+            <div class="wallet-bubble ghost">
+              <div class="wallet-id">0x1234…abcd</div>
+              <p>“Buying any sealed Tiny Legends under $5.”</p>
+            </div>
+          </div>
+          <div class="bubble-column">
+            <div class="chat-panel">
+              <div class="chat-messages">
+                <div class="msg ghost">
+                  <span class="msg-from">you · 0x…</span>
+                  <span class="msg-text">
+                    Wallet-to-wallet chat kommer här – kopplat till Spawn Engine.
+                  </span>
+                </div>
+              </div>
+              <div class="chat-input-row">
+                <input type="text" placeholder="Soon: DM a wallet directly…" disabled />
+                <button class="btn-primary" disabled>Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="view-settings" class="view">
+        <div class="view-header">
+          <h2>Settings</h2>
+          <p>Wallet, API-proxy & theme. Inga fler låsta views här.</p>
+        </div>
+
+        <div class="panel">
+          <h3>Wallet</h3>
+          <p id="settingsWalletStatus">Not connected.</p>
+          <div class="button-row">
+            <button id="settingsConnect" class="btn-primary">Connect / Switch</button>
+            <button id="settingsDisconnect" class="btn-ghost">Disconnect</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Wield API Proxy</h3>
+          <p>
+            Requests går via <code>/api/wield/*</code> så att din
+            <code>WIELD_API_KEY</code> aldrig syns i klienten.
+          </p>
+          <p id="settingsApiStatus" class="muted">Status: checking…</p>
+        </div>
+
+        <div class="panel">
+          <h3>Theme</h3>
+          <p>Dark Comic mode är standard. Light mode kan läggas till senare.</p>
+          <div class="theme-preview-row">
+            <div class="theme-preview theme-dark active">
+              <span>Dark · Spawn</span>
+            </div>
+            <div class="theme-preview theme-light disabled">
+              <span>Soon™</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="app-footer">
+      <p>
+        Built with <span class="spawn-spark">Spawn Engine</span> ·
+        TTS – Onchain Swap/Trade · Powered by Wield API
+      </p>
+    </footer>
+  </div>
+
+  <script src="/app.js"></script>
 </body>
 </html>
-
