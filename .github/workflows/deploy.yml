@@ -1,40 +1,52 @@
-// SpawnEngine/scripts/deploy.ts
-import { ethers } from "hardhat";
+name: Deploy Contracts (Base Sepolia)
 
-async function main() {
-  const [deployer] = await ethers.getSigners();
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_demo_series:
+        description: "Also deploy demo TokenPackSeries (yes/no)"
+        required: true
+        default: "no"
 
-  const platform =
-    process.env.PLATFORM_FEE_RECIPIENT || (await deployer.getAddress());
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  console.log("Deploying SpawnEngine with:");
-  console.log("  Deployer:", deployer.address);
-  console.log("  Platform fee recipient:", platform);
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-  // 1. Deploy ReserveGuard med default-parametrar
-  // mythicMult = 200x (200e18), buffer = +10% (1000 bps)
-  const mythicMult = ethers.parseEther("200");
-  const bufferBps = 1000;
+      - name: Install
+        run: npm install
 
-  const Guard = await ethers.getContractFactory("ReserveGuard");
-  const guard = await Guard.deploy(mythicMult, bufferBps);
-  await guard.waitForDeployment();
-  const guardAddr = await guard.getAddress();
-  console.log("ReserveGuard:", guardAddr);
+      - name: Compile
+        run: npm run build
 
-  // 2. Deploy PackFactory (tar bara platformFeeRecipient)
-  const Factory = await ethers.getContractFactory("PackFactory");
-  const factory = await Factory.deploy(platform);
-  await factory.waitForDeployment();
-  const factoryAddr = await factory.getAddress();
-  console.log("PackFactory deployed at:", factoryAddr);
+      - name: Deploy Guard & Factory
+        env:
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          PLATFORM_FEE_RECIPIENT: ${{ secrets.PLATFORM_FEE_RECIPIENT }}
+        run: |
+          npx hardhat run scripts/deploy.ts --network baseSepolia | tee deploy.log
+          echo "GUARD=$(grep -i 'ReserveGuard:' deploy.log | awk '{print $2}')" >> $GITHUB_ENV
+          echo "FACTORY=$(grep -i 'PackFactory' deploy.log | awk '{print $3}')" >> $GITHUB_ENV
+          echo "Guard: $GUARD"
+          echo "Factory: $FACTORY"
 
-  console.log("==== ENV EXPORT ====");
-  console.log("GUARD", guardAddr);
-  console.log("FACTORY", factoryAddr);
-}
-
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+      - name: Deploy Demo TokenPackSeries (optional)
+        if: ${{ github.event.inputs.deploy_demo_series == 'yes' }}
+        env:
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          FACTORY: ${{ env.FACTORY }}
+          GUARD: ${{ env.GUARD }}
+          PAYOUT_TOKEN: ${{ secrets.PAYOUT_TOKEN }}
+          PACK_PRICE_WEI: ${{ secrets.PACK_PRICE_WEI }}
+          CREATOR_WALLET: ${{ secrets.CREATOR_WALLET }}
+        run: |
+          npx hardhat run scripts/deploySeries.ts --network baseSepolia
