@@ -37,6 +37,7 @@ async function wieldFetch(path, params = {}) {
   const json = await res.json();
   state.apiHealthy = true;
   updateApiStatus();
+  updateSyncStatus();
   return json;
 }
 
@@ -98,7 +99,6 @@ async function connectWallet() {
       const addr = accounts[0];
       setWalletAddress(addr);
     } else {
-      // fallback – prompt user
       const fake = prompt(
         "No injected wallet found. Enter a wallet address to simulate connection (Base)."
       );
@@ -114,6 +114,7 @@ function disconnectWallet() {
   localStorage.removeItem("spawnEngineWallet");
   updateWalletUi();
   renderForTrade(); // clear
+  updateSyncStatus();
 }
 
 function setWalletAddress(addr) {
@@ -130,6 +131,7 @@ function restoreWalletFromStorage() {
     state.walletAddress = saved;
     updateWalletUi();
     renderForTrade();
+    updateSyncStatus();
   }
 }
 
@@ -164,7 +166,8 @@ function updateApiStatus() {
     settingsApi.textContent = "Status: OK – /api/wield/* proxy svarar.";
   } else {
     el.textContent = "Wield API: Unknown";
-    settingsApi.textContent = "Status: ännu inget svar (test körs vid första request).";
+    settingsApi.textContent =
+      "Status: ännu inget svar (test körs vid första request).";
   }
 }
 
@@ -230,10 +233,8 @@ async function loadRecentPulls() {
 }
 
 function buildDerivedData() {
-  // Mark "new" packs: simplest är att ta första N från all
   state.packsNew = state.packsAll.slice(0, 12);
 
-  // Build verified creators list
   const creatorMap = new Map();
   const source = state.packsVerified || [];
   source.forEach((pack) => {
@@ -374,7 +375,6 @@ function renderForTrade() {
     return;
   }
 
-  // Just use recent pulls as "mock inventory" för nu
   const pulls = state.recentPulls || [];
   if (pulls.length === 0) {
     container.innerHTML =
@@ -445,7 +445,7 @@ function renderOverview() {
     <div class="metric-card">
       <div class="metric-label">Creator earnings mode</div>
       <div class="metric-value">10–50% to creators</div>
-      <div class="metric-sub">Configured in Spawn Engine contracts</div>
+      <div class="metric-sub">Configured in SpawnEngine contracts</div>
     </div>
   `;
 }
@@ -539,13 +539,11 @@ function renderTicker() {
     )}`;
   });
 
-  // Loop twice for smooth ticker
   const full = items.concat(items).join("  •  ");
   el.textContent = full;
 }
 
 function startTickerLoop() {
-  // uppdatera texterna ibland när nya pulls kommer
   setInterval(async () => {
     await loadRecentPulls();
     buildDerivedData();
@@ -553,22 +551,21 @@ function startTickerLoop() {
     renderForTrade();
     renderTicker();
     updateSyncStatus();
-  }, 30000); // var 30s
+  }, 30000);
 }
 
 function startActivityRefreshLoop() {
-  // lätt överlapp med ticker, men okej – separata loops är fine
   setInterval(async () => {
     await loadAllPacks();
     await loadVerifiedPacks();
     buildDerivedData();
-    renderTradingCards(
-      document.querySelector(".filter-chip.active")?.getAttribute(
-        "data-packfilter"
-      ) || "all"
-    );
+    const activeFilter =
+      document
+        .querySelector(".filter-chip.active")
+        ?.getAttribute("data-packfilter") || "all";
+    renderTradingCards(activeFilter);
     renderOverview();
     renderCreators();
     updateSyncStatus();
-  }, 60000); // 1 min
+  }, 60000);
 }
