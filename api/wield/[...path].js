@@ -13,24 +13,24 @@ module.exports = async function handler(req, res) {
     const joinedPath = Array.isArray(path) ? path.join("/") : String(path || "");
     const baseUrl = "https://build.wield.xyz";
 
-    const urlSearch = new URLSearchParams(req.query);
-    urlSearch.delete("path");
+    const query = new URLSearchParams(req.query);
+    query.delete("path");
 
-    const targetUrl =
+    const target =
       `${baseUrl}/${joinedPath}` +
-      (urlSearch.toString() ? `?${urlSearch.toString()}` : "");
+      (query.toString() ? `?${query.toString()}` : "");
 
-    const upstream = await fetch(targetUrl, {
+    const upstream = await fetch(target, {
       method: req.method,
       headers: {
         accept: "application/json",
         "content-type": "application/json",
-        "x-api-key": apiKey
+        "x-api-key": apiKey,
       },
       body:
         req.method === "GET" || req.method === "HEAD"
           ? undefined
-          : JSON.stringify(req.body || {})
+          : JSON.stringify(req.body || {}),
     });
 
     const text = await upstream.text();
