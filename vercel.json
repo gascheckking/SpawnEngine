@@ -3,14 +3,16 @@
   "builds": [
     { "src": "docs/index.html", "use": "@vercel/static" },
     { "src": "docs/creator.html", "use": "@vercel/static" },
+    { "src": "docs/(.*)", "use": "@vercel/static" },
     { "src": "css/style.css", "use": "@vercel/static" },
     { "src": "app.js", "use": "@vercel/static" },
     { "src": "api/wield/[...path].js", "use": "@vercel/node" }
   ],
   "routes": [
     { "src": "^/api/wield/(.*)$", "dest": "/api/wield/[...path].js" },
+    { "src": "^/css/style\\.css$", "dest": "/css/style.css" },
+    { "src": "^/app.js$", "dest": "/app.js" },
     { "src": "^/creator$", "dest": "/docs/creator.html" },
-    { "src": "^/$", "dest": "/docs/index.html" },
-    { "src": "^(.*)$", "dest": "/docs$1" }
+    { "src": "^/$", "dest": "/docs/index.html" }
   ]
 }
