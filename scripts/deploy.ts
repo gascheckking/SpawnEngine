@@ -18,7 +18,7 @@ async function main() {
   const guard = await Guard.deploy(mythicMult, bufferBps);
   await guard.waitForDeployment();
   const guardAddr = await guard.getAddress();
-  console.log("ReserveGuard:", guardAddr);
+  console.log("ReserveGuard deployed at:", guardAddr);
 
   const Factory = await ethers.getContractFactory("PackFactory");
   const factory = await Factory.deploy(platform);
@@ -26,7 +26,7 @@ async function main() {
   const factoryAddr = await factory.getAddress();
   console.log("PackFactory deployed at:", factoryAddr);
 
-  console.log("==== ENV EXPORT ====");
+  console.log("==== COPY TO ACTIONS ENV OR NOTES ====");
   console.log("GUARD", guardAddr);
   console.log("FACTORY", factoryAddr);
 }
