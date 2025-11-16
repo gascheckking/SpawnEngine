@@ -1,8 +1,6 @@
 // SpawnEngine/api/wield/[...path].js
 
-import { NextApiRequest, NextApiResponse } from 'next';
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+module.exports = async function handler(req, res) {
   try {
     const apiKey = process.env.WIELD_API_KEY;
     if (!apiKey) {
@@ -15,9 +13,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const joinedPath = Array.isArray(path) ? path.join("/") : String(path || "");
     const baseUrl = "https://build.wield.xyz";
 
-    // Build query string from original request
     const urlSearch = new URLSearchParams(req.query);
-    urlSearch.delete("path"); // remove catch-all helper if present
+    urlSearch.delete("path");
 
     const targetUrl =
       `${baseUrl}/${joinedPath}` +
@@ -26,14 +23,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const upstream = await fetch(targetUrl, {
       method: req.method,
       headers: {
-        "accept": "application/json",
+        accept: "application/json",
         "content-type": "application/json",
-        "x-api-key": apiKey,
+        "x-api-key": apiKey
       },
       body:
         req.method === "GET" || req.method === "HEAD"
           ? undefined
-          : JSON.stringify(req.body || {}),
+          : JSON.stringify(req.body || {})
     });
 
     const text = await upstream.text();
@@ -49,4 +46,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.error("Wield proxy error:", err);
     res.status(500).json({ error: "Proxy error", detail: String(err) });
   }
-}
+};
