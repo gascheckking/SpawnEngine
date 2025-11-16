@@ -19,7 +19,7 @@ contract TokenPackSeries is ERC721Enumerable, Ownable {
     uint256 public nextId = 1;
     uint256 public escrow;                 // 15% accumulation for payouts
 
-    // revenue splits (fixed v1)
+    // revenue splits (fixed v1) – these ger creators 50%, platform 35%, “treasury” 15%
     uint256 public constant CREATOR_BPS = 5000;  // 50%
     uint256 public constant PLATFORM_BPS = 3500; // 35%
     uint256 public constant TREASURY_BPS = 1500; // 15%
@@ -130,6 +130,7 @@ contract TokenPackSeries is ERC721Enumerable, Ownable {
     // =========================
     // Burn/Gamble (config v1)
     // =========================
+
     // Commons: burn 5 opened commons -> 20% chance to mint 2 packs
     function burnCommonsForTwo(uint256[] calldata tokenIds) external {
         require(tokenIds.length >= 5, "need 5 commons");
@@ -190,4 +191,3 @@ contract TokenPackSeries is ERC721Enumerable, Ownable {
         emit BurnAttempt(msg.sender, 4, 1, success, minted);
     }
 }
-
