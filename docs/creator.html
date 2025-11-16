@@ -2,20 +2,29 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Create Series — SpawnEngine</title>
+  <title>Create Series — SpawnEngine Pack Factory</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body{font-family:system-ui,Arial;margin:24px;max-width:760px}
-    input,button{padding:10px;border:1px solid #ddd;border-radius:8px}
+    body{font-family:system-ui,Arial;margin:24px;max-width:760px;background:#05030b;color:#f5f5ff}
+    h1{margin-top:0}
+    input,button{padding:10px;border:1px solid #333;border-radius:8px;background:#080414;color:#f5f5ff}
+    input{flex:1}
+    button{cursor:pointer;background:#ff1744;border-color:#ff1744;color:#fff;font-weight:600}
+    button:hover{filter:brightness(1.05)}
     .row{display:flex;gap:8px;align-items:center;margin:10px 0}
-    .card{border:1px solid #eee;border-radius:12px;padding:16px;margin:12px 0}
-    label{min-width:160px}
+    .card{border:1px solid #252036;border-radius:12px;padding:16px;margin:12px 0;background:#0a0516}
+    label{min-width:160px;font-size:0.9rem}
     .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+    #out{margin-top:12px;font-size:0.9rem;white-space:pre-wrap}
+    a{color:#3dffb8}
   </style>
 </head>
 <body>
   <h1>Create Token Pack Series</h1>
-  <p>Connect wallet → fill fields → Deploy via <span class="mono">PackFactory.deployTokenSeries()</span>.</p>
+  <p>
+    Connect wallet → fill fields → Deploy via
+    <span class="mono">PackFactory.deployTokenSeries()</span>.
+  </p>
 
   <div class="card">
     <div class="row">
@@ -58,7 +67,7 @@
     ];
 
     $("connect").onclick = async () => {
-      if (!window.ethereum) return alert("Install a wallet");
+      if (!window.ethereum) return alert("Install a wallet like MetaMask");
       const provider = new ethers.BrowserProvider(window.ethereum);
       signer = await provider.getSigner();
       const addr = await signer.getAddress();
@@ -67,6 +76,7 @@
 
     $("deploy").onclick = async () => {
       try {
+        if (!signer) return alert("Connect wallet first");
         const f = new ethers.Contract($("factory").value.trim(), factoryAbi, signer);
         const tx = await f.deployTokenSeries(
           $("token").value.trim(),
@@ -79,12 +89,12 @@
         const ev = rc.logs.find(l => l.fragment?.name === "SeriesDeployed");
         if (ev) {
           $("out").innerHTML = `
-            <div>✓ Deployed: <b>${ev.args[0]}</b></div>
-            <div>creator: ${ev.args[1]}</div>
-            <div>payoutToken: ${ev.args[2]}</div>
-            <div>packPrice: ${ev.args[3].toString()}</div>
-            <div>guard: ${ev.args[4]}</div>
-            <p>Open <a href="../index.html">SpawnEngine UI</a> and paste the series address.</p>
+            ✓ Deployed series:<br><b>${ev.args[0]}</b><br><br>
+            creator: ${ev.args[1]}<br>
+            payoutToken: ${ev.args[2]}<br>
+            packPrice: ${ev.args[3].toString()}<br>
+            guard: ${ev.args[4]}<br><br>
+            Open <a href="./index.html">SpawnEngine UI</a> and paste the series address.
           `;
         } else {
           $("out").textContent = "Deployed (check explorer logs for SeriesDeployed).";
