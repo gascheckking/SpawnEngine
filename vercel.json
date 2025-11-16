@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "scripts/deploy.ts",
+      "use": "@vercel/node"
+    },
+    {
+      "src": "scripts/deploySeries.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/wield/(.*)",
+      "dest": "/api/wield/[...path].js"
+    }
+  ]
+}
