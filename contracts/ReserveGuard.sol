@@ -32,4 +32,3 @@ contract ReserveGuard {
         return escrowBalance >= reserveRequired(packPrice, 1);
     }
 }
-
