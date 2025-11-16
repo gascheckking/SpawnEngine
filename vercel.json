@@ -4,13 +4,13 @@
     { "src": "docs/index.html", "use": "@vercel/static" },
     { "src": "docs/creator.html", "use": "@vercel/static" },
     { "src": "docs/(.*)", "use": "@vercel/static" },
-    { "src": "css/style.css", "use": "@vercel/static" },
+    { "src": "css/(.*)", "use": "@vercel/static" },
     { "src": "app.js", "use": "@vercel/static" },
-    { "src": "api/wield/[...path].js", "use": "@vercel/node" }
+    { "src": "api/wield/(.*)", "use": "@vercel/node" }
   ],
   "routes": [
-    { "src": "^/api/wield/(.*)$", "dest": "/api/wield/[...path].js" },
-    { "src": "^/css/style\\.css$", "dest": "/css/style.css" },
+    { "src": "^/api/wield/(.*)$", "dest": "/api/wield/$1.js" },
+    { "src": "^/css/(.*)$", "dest": "/css/$1" },
     { "src": "^/app.js$", "dest": "/app.js" },
     { "src": "^/creator$", "dest": "/docs/creator.html" },
     { "src": "^/$", "dest": "/docs/index.html" }
