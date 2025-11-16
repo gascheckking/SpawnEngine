@@ -28,9 +28,7 @@ async function main() {
   );
   const rc = await tx.wait();
   console.log("deployTokenSeries tx:", rc?.hash);
-  console.log(
-    "Check explorer logs for SeriesDeployed to get TokenPackSeries address."
-  );
+  console.log("Check explorer logs for SeriesDeployed to get TokenPackSeries address.");
 }
 
 main().catch((e) => {
