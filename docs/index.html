@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <title>SpawnEngine — Onchain Swap/Trade</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <div class="app-shell">
@@ -14,12 +14,12 @@
         <div class="brand-logo">SE</div>
         <div class="brand-copy">
           <h1>SpawnEngine — Onchain Swap/Trade</h1>
-          <p>Spawn Engine for packs, pulls & onchain collectors</p>
+          <p>Pack engine for buys, pulls & onchain collectors</p>
         </div>
       </div>
 
       <div class="header-right">
-        <div class="network-pill">Base · Vibechain style</div>
+        <div class="network-pill">Base · Vibechain-style packs</div>
         <button id="walletButton" class="btn-primary">
           Connect Wallet
         </button>
@@ -60,7 +60,7 @@
       <section id="view-trading" class="view active">
         <div class="view-header">
           <h2>Pack Trading</h2>
-          <p>Open, collect & trade packs synced with Vibe-style markets via Wield.</p>
+          <p>Open, collect & trade packs via Wield-powered markets.</p>
         </div>
 
         <div class="filter-row">
@@ -70,7 +70,7 @@
         </div>
 
         <div id="tradingCards" class="card-grid">
-          <!-- packs injected här -->
+          <!-- packs injiceras här -->
         </div>
       </section>
 
@@ -78,7 +78,7 @@
       <section id="view-for-trade" class="view">
         <div class="view-header">
           <h2>My Packs / For Trade</h2>
-          <p>Packs in your wallet, ready to list or swap.</p>
+          <p>Packs i din wallet, redo att listas eller swappas.</p>
         </div>
 
         <div id="forTradeList" class="card-grid compact">
@@ -96,25 +96,24 @@
         </div>
 
         <div class="metric-grid" id="overviewMetrics">
-          <!-- metrics cards -->
+          <!-- metric cards -->
         </div>
 
         <div class="panel">
-          <h3>Strategy: Treat packs like sealed assets</h3>
+          <h3>Strategy: sealed assets</h3>
           <p>
-            Buy early, hold sealed, sell when supply shrinks and bounties +
-            hype push prices up. SpawnEngine visualiserar det åt dig.
+            Buy early, hold sealed, sell när supply krymper och bounties + hype
+            trycker upp priset. SpawnEngine visualiserar sealed/value-spelet.
           </p>
         </div>
 
         <div class="panel">
-          <h3>Creator earnings (SpawnEngine vs fees)</h3>
+          <h3>Creator earnings vs fees</h3>
           <p>
             SpawnEngine är designad för att ge creators
-            <strong>10–50% earnings cut</strong> istället
-            för klassiska höga marketplace-fees. Själva spliten styrs on-chain i
-            dina kontrakt (PackFactory / TokenPackSeries), den här appen visar
-            bara datan och fördelningen.
+            <strong>10–50% earnings cut</strong> på buys i stället för höga
+            marketplace-fees. Själva spliten styrs onchain i
+            <code>TokenPackSeries</code>, dashboarden speglar bara datan.
           </p>
         </div>
       </section>
@@ -123,7 +122,7 @@
       <section id="view-activity" class="view">
         <div class="view-header">
           <h2>Recent Activity</h2>
-          <p>Live pulls, big bounties, snipes & sealed pack flips.</p>
+          <p>Live pulls, big bounties, snipes & sealed flips.</p>
         </div>
         <div id="activityFeed" class="activity-list">
           <!-- pulls -->
@@ -135,7 +134,7 @@
         <div class="view-header">
           <h2>Verified Creators</h2>
           <p>
-            Creators med verified packs – auto-samlas från Wield API
+            Creators med verified packs – auto-hämtas från Wield API
             <span class="tag">auto</span>
           </p>
         </div>
@@ -148,7 +147,7 @@
       <section id="view-chat" class="view">
         <div class="view-header">
           <h2>Wallet Bubbles / Chat</h2>
-          <p>Planerad funktion – UI redo för future Farcaster / wallet-chat.</p>
+          <p>Planerad funktion – UI klart för Farcaster / wallet-chat senare.</p>
         </div>
 
         <div class="bubble-layout">
@@ -185,7 +184,7 @@
       <section id="view-settings" class="view">
         <div class="view-header">
           <h2>Settings</h2>
-          <p>Wallet, API-proxy & theme. Inga fler låsta views här.</p>
+          <p>Wallet, API-proxy & theme. Ingen mer låst vy här.</p>
         </div>
 
         <div class="panel">
@@ -208,7 +207,7 @@
 
         <div class="panel">
           <h3>Theme</h3>
-          <p>Dark Comic mode är standard. Light mode kan läggas till senare.</p>
+          <p>Dark Comic är standard. Light mode kan släppas som expansion.</p>
           <div class="theme-preview-row">
             <div class="theme-preview theme-dark active">
               <span>Dark · Spawn</span>
