@@ -1,571 +1,607 @@
-// Basic global state
+// Enkel state
 const state = {
-  walletAddress: null,
-  packsAll: [],
-  packsVerified: [],
-  packsNew: [],
-  recentPulls: [],
-  verifiedCreators: [],
-  apiHealthy: false,
+  wallet: null,
+  theme: "dark",
+  verified: {
+    x: false,
+    farcaster: false,
+    base: false,
+  },
 };
 
-// ---------- UTIL ----------
+// Hjälp-funktion
+const $ = (q) => document.querySelector(q);
+const $$ = (q) => Array.from(document.querySelectorAll(q));
 
-function shortAddress(addr) {
-  if (!addr) return "";
-  return addr.slice(0, 6) + "…" + addr.slice(-4);
-}
-
-function formatUsd(num) {
-  if (num == null || isNaN(num)) return "-";
-  const n = Number(num);
-  if (!isFinite(n)) return "-";
-  if (n >= 1000) return "$" + n.toFixed(0);
-  if (n >= 10) return "$" + n.toFixed(2);
-  return "$" + n.toFixed(3);
-}
-
-// call our proxy: /api/wield/*
-async function wieldFetch(path, params = {}) {
-  const query = new URLSearchParams(params);
-  const url = `/api/wield/${path}${query.toString() ? `?${query}` : ""}`;
-
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Wield error: ${res.status}`);
-  }
-  const json = await res.json();
-  state.apiHealthy = true;
-  updateApiStatus();
-  updateSyncStatus();
-  return json;
-}
-
-// ---------- DOM INIT ----------
-
-document.addEventListener("DOMContentLoaded", () => {
-  initTabs();
-  initWalletButtons();
-  restoreWalletFromStorage();
-  bootstrapData();
-});
-
+// ----- Tabs -----
 function initTabs() {
-  const tabButtons = document.querySelectorAll(".tab-button");
-  const views = document.querySelectorAll(".view");
+  const tabs = $$(".tab-button");
+  const views = $$(".view");
 
-  tabButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const target = btn.getAttribute("data-tab");
+  tabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const viewId = tab.dataset.view;
 
-      tabButtons.forEach((b) => b.classList.remove("active"));
+      tabs.forEach((t) => t.classList.remove("active"));
+      tab.classList.add("active");
+
       views.forEach((v) => v.classList.remove("active"));
-
-      btn.classList.add("active");
-      const view = document.getElementById(`view-${target}`);
-      if (view) view.classList.add("active");
+      $("#" + viewId).classList.add("active");
     });
   });
 
-  const filters = document.querySelectorAll(".filter-chip");
-  filters.forEach((chip) => {
-    chip.addEventListener("click", () => {
-      filters.forEach((c) => c.classList.remove("active"));
-      chip.classList.add("active");
-      const filter = chip.getAttribute("data-packfilter");
-      renderTradingCards(filter);
-    });
-  });
+  // Default: trading
+  const first = $(".tab-button");
+  if (first) first.click();
 }
 
-function initWalletButtons() {
-  const headerBtn = document.getElementById("walletButton");
-  const settingsConnect = document.getElementById("settingsConnect");
-  const settingsDisconnect = document.getElementById("settingsDisconnect");
-
-  headerBtn.addEventListener("click", connectWallet);
-  settingsConnect.addEventListener("click", connectWallet);
-  settingsDisconnect.addEventListener("click", disconnectWallet);
-}
-
-// ---------- WALLET ----------
-
-async function connectWallet() {
-  try {
-    if (window.ethereum) {
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
-      const addr = accounts[0];
-      setWalletAddress(addr);
-    } else {
-      const fake = prompt(
-        "No injected wallet found. Enter a wallet address to simulate connection (Base)."
-      );
-      if (fake) setWalletAddress(fake.trim());
-    }
-  } catch (err) {
-    console.error("Wallet connect error", err);
-  }
-}
-
-function disconnectWallet() {
-  state.walletAddress = null;
-  localStorage.removeItem("spawnEngineWallet");
-  updateWalletUi();
-  renderForTrade(); // clear
-  updateSyncStatus();
-}
-
-function setWalletAddress(addr) {
-  state.walletAddress = addr;
-  localStorage.setItem("spawnEngineWallet", addr);
-  updateWalletUi();
-  renderForTrade();
-  updateSyncStatus();
-}
-
-function restoreWalletFromStorage() {
-  const saved = localStorage.getItem("spawnEngineWallet");
-  if (saved) {
-    state.walletAddress = saved;
-    updateWalletUi();
-    renderForTrade();
-    updateSyncStatus();
-  }
-}
-
-function updateWalletUi() {
-  const headerBtn = document.getElementById("walletButton");
-  const settingsStatus = document.getElementById("settingsWalletStatus");
-  const statusWallet = document.getElementById("status-wallet");
-
-  if (!headerBtn || !settingsStatus || !statusWallet) return;
-
-  if (state.walletAddress) {
-    const short = shortAddress(state.walletAddress);
-    headerBtn.textContent = short;
-    settingsStatus.textContent = `Connected: ${state.walletAddress}`;
-    statusWallet.textContent = `Wallet: ${short}`;
-  } else {
-    headerBtn.textContent = "Connect Wallet";
-    settingsStatus.textContent = "Not connected.";
-    statusWallet.textContent = "Wallet: Not connected";
-  }
-}
-
-// ---------- STATUS ----------
-
-function updateApiStatus() {
-  const el = document.getElementById("status-api");
-  const settingsApi = document.getElementById("settingsApiStatus");
-  if (!el || !settingsApi) return;
-
-  if (state.apiHealthy) {
-    el.textContent = "Wield API: Connected via proxy";
-    settingsApi.textContent = "Status: OK – /api/wield/* proxy svarar.";
-  } else {
-    el.textContent = "Wield API: Unknown";
-    settingsApi.textContent =
-      "Status: ännu inget svar (test körs vid första request).";
-  }
-}
-
-function updateSyncStatus() {
-  const el = document.getElementById("status-sync");
+// ----- Ticker -----
+function initTicker() {
+  const el = $("#ticker-text");
   if (!el) return;
-  if (state.walletAddress && state.apiHealthy) {
-    el.textContent = "Sync: Wallet + Wield live";
-  } else if (state.apiHealthy) {
-    el.textContent = "Sync: API OK · Connect wallet for full view";
-  } else {
-    el.textContent = "Sync: waiting…";
-  }
+
+  const messages = [
+    "SpawnEngine online • monitoring Base activity…",
+    "Tiny Legends 2 · Foil Realms · Mad Myth · Aura Maxxed",
+    "Luckiest pull: Mythic Foil at $0.12 → floor $24.20",
+    "Unlucky survivor: 0xdead…beef • 0 / 400 legends pulled",
+  ];
+
+  el.textContent = messages.join("   •   ");
 }
 
-// ---------- DATA BOOTSTRAP ----------
+// ----- Dummy data -----
+const demoPacks = [
+  {
+    name: "Tiny Legends 2",
+    creator: "spawnizz",
+    price: "$0.24",
+    supply: "42 designs",
+    tags: ["verified", "bounty", "new"],
+  },
+  {
+    name: "Foil Realms",
+    creator: "spawnizz",
+    price: "$0.28",
+    supply: "36 designs",
+    tags: ["verified"],
+  },
+  {
+    name: "Aura Maxxed",
+    creator: "spawnizz",
+    price: "$0.46",
+    supply: "24 designs",
+    tags: ["new"],
+  },
+  {
+    name: "Mad Myth",
+    creator: "spawnizz",
+    price: "$0.22",
+    supply: "18 designs",
+    tags: [],
+  },
+];
 
-async function bootstrapData() {
-  updateApiStatus();
-  updateSyncStatus();
-  await Promise.allSettled([
-    loadAllPacks(),
-    loadVerifiedPacks(),
-    loadRecentPulls(),
-  ]);
-  buildDerivedData();
-  renderAll();
-  startTickerLoop();
-  startActivityRefreshLoop();
-}
+const demoInventory = [
+  { name: "Tiny Legends 2", status: "for-trade", rarity: "legendary", value: "$68.00" },
+  { name: "Foil Realms", status: "sealed", rarity: "mythic", value: "$32.00" },
+  { name: "Mad Myth", status: "for-trade", rarity: "rare", value: "$4.20" },
+  { name: "Chaos Draft", status: "grail", rarity: "legendary", value: "$120.00" },
+];
 
-async function loadAllPacks() {
-  try {
-    const data = await wieldFetch("market/cardpacks", { limit: 36 });
-    const packs = data?.items || data || [];
-    state.packsAll = packs;
-  } catch (e) {
-    console.error("loadAllPacks", e);
-  }
-}
+const luckiestPulls = [
+  { wallet: "0x596a…08ff", pack: "Tiny Legends 2", hit: "Mythic", spent: "$12", value: "$420" },
+  { wallet: "0xfeet…sn1ff", pack: "Foil Realms", hit: "Legendary Foil", spent: "$3", value: "$96" },
+  { wallet: "0x1337…c0de", pack: "Mad Myth", hit: "Full set", spent: "$48", value: "$200" },
+];
 
-async function loadVerifiedPacks() {
-  try {
-    const data = await wieldFetch("market/cardpacks", {
-      limit: 36,
-      verified: "true",
-    });
-    const packs = data?.items || data || [];
-    state.packsVerified = packs;
-  } catch (e) {
-    console.error("loadVerifiedPacks", e);
-  }
-}
+const unluckyPulls = [
+  { wallet: "0xdead…beef", pack: "Tiny Legends 2", hit: "0 / 400 legends", spent: "$96", value: "$40" },
+  { wallet: "0x0bad…luck", pack: "Foil Realms", hit: "Commons only", spent: "$32", value: "$10" },
+];
 
-async function loadRecentPulls() {
-  try {
-    const data = await wieldFetch("vibe/boosterbox/recent", { limit: 30 });
-    const pulls = data?.items || data || [];
-    state.recentPulls = pulls;
-  } catch (e) {
-    console.error("loadRecentPulls", e);
-  }
-}
+const statsWallets = [
+  { wallet: "0x596a…08ff", score: "9.8", pulls: 420, legends: 16 },
+  { wallet: "0xfeet…sn1ff", score: "9.1", pulls: 260, legends: 9 },
+  { wallet: "0x1337…c0de", score: "8.7", pulls: 180, legends: 6 },
+];
 
-function buildDerivedData() {
-  state.packsNew = state.packsAll.slice(0, 12);
+// ----- Rendering helpers -----
+function renderTrading() {
+  const grid = $("#trading-grid");
+  if (!grid) return;
 
-  const creatorMap = new Map();
-  const source = state.packsVerified || [];
-  source.forEach((pack) => {
-    const creator = pack.creator || pack.creatorAddress || pack.owner;
-    if (!creator) return;
-    const key = creator.toLowerCase();
-    if (!creatorMap.has(key)) {
-      creatorMap.set(key, {
-        creator,
-        packs: 0,
-        totalVolumeUsd: 0,
-        anyName: pack.collectionName || pack.name || "Pack",
-      });
-    }
-    const entry = creatorMap.get(key);
-    entry.packs += 1;
+  const activeFilter = $("#trading-filters .filter-chip.active")?.dataset.filter || "all";
 
-    const price =
-      pack.priceUsd ??
-      pack.price_usd ??
-      pack.price ??
-      pack.floorUsd ??
-      pack.floorPriceUsd ??
-      0;
-    if (!isNaN(price)) entry.totalVolumeUsd += Number(price);
+  const filtered = demoPacks.filter((p) => {
+    if (activeFilter === "all") return true;
+    if (activeFilter === "verified") return p.tags.includes("verified");
+    if (activeFilter === "new") return p.tags.includes("new");
+    if (activeFilter === "bounty") return p.tags.includes("bounty");
+    return true;
   });
 
-  state.verifiedCreators = Array.from(creatorMap.values()).sort(
-    (a, b) => b.totalVolumeUsd - a.totalVolumeUsd
-  );
-}
+  grid.innerHTML = filtered
+    .map((p) => {
+      const badges = [];
+      if (p.tags.includes("verified")) badges.push('<span class="badge badge-verified">Verified</span>');
+      if (p.tags.includes("new")) badges.push('<span class="badge badge-new">New</span>');
+      if (p.tags.includes("bounty")) badges.push('<span class="badge badge-bounty">Bounty</span>');
 
-// ---------- RENDER ----------
-
-function renderAll() {
-  renderTradingCards("all");
-  renderForTrade();
-  renderOverview();
-  renderActivity();
-  renderCreators();
-  renderTicker();
-}
-
-function renderTradingCards(filter) {
-  const container = document.getElementById("tradingCards");
-  if (!container) return;
-
-  let packs = state.packsAll;
-  if (filter === "new") packs = state.packsNew;
-  if (filter === "verified") packs = state.packsVerified;
-
-  if (!packs || packs.length === 0) {
-    container.innerHTML =
-      '<p class="muted">No packs found yet – check your Wield API key & proxy.</p>';
-    return;
-  }
-
-  container.innerHTML = packs
-    .map((pack) => {
-      const name = pack.name || pack.title || "Unnamed Pack";
-      const collection = pack.collectionName || pack.series || "";
-      const creator =
-        pack.creatorName ||
-        pack.creator ||
-        pack.creatorAddress ||
-        pack.owner ||
-        "Unknown";
-      const supplyTotal = pack.totalSupply || pack.maxSupply || pack.supply || "?";
-      const supplyLeft = pack.remainingSupply ?? pack.remaining ?? null;
-      const isVerified = !!(pack.verified || pack.isVerified);
-
-      const price =
-        pack.priceUsd ??
-        pack.price_usd ??
-        pack.price ??
-        pack.floorUsd ??
-        pack.floorPriceUsd ??
-        null;
-
-      const bounty =
-        pack.bigBountyLabel ||
-        pack.bountyLabel ||
-        (pack.hasBounty ? "Bounty live" : null);
-
-      return `
-      <article class="pack-card">
-        <div class="pack-header">
-          <div class="pack-title">
-            <div>${name}</div>
-            ${
-              collection
-                ? `<div class="pack-creator">${collection}</div>`
-                : ""
-            }
-          </div>
-          <div class="pack-meta">
-            <span class="pack-price">${formatUsd(price)}</span>
-            <span class="pack-creator">${shortAddress(creator)}</span>
-          </div>
-        </div>
-        <div class="pack-badges">
-          ${
-            isVerified
-              ? `<span class="badge badge-verified">Verified</span>`
-              : ""
-          }
-          <span class="badge badge-supply">
-            Supply: ${supplyLeft ?? "?"}/${supplyTotal}
-          </span>
-          ${
-            filter === "new"
-              ? `<span class="badge badge-new">New</span>`
-              : ""
-          }
-          ${bounty ? `<span class="badge badge-bounty">${bounty}</span>` : ""}
-        </div>
-        <div class="card-actions">
-          <button class="btn-mini" data-pack-id="${pack.id || pack.packId || ""}">
-            Open / View
-          </button>
-          <button class="btn-mini">
-            Fast Buy
-          </button>
-        </div>
-      </article>
-    `;
-    })
-    .join("");
-}
-
-function renderForTrade() {
-  const container = document.getElementById("forTradeList");
-  if (!container) return;
-
-  if (!state.walletAddress) {
-    container.innerHTML =
-      '<p class="muted">Connect wallet to load packs owned by this address.</p>';
-    return;
-  }
-
-  const pulls = state.recentPulls || [];
-  if (pulls.length === 0) {
-    container.innerHTML =
-      '<p class="muted">No pulls loaded yet – open some packs or wait for activity.</p>';
-    return;
-  }
-
-  container.innerHTML = pulls
-    .slice(0, 18)
-    .map((pull) => {
-      const packName = pull.packName || pull.series || "Pack";
-      const cardName = pull.cardName || pull.name || "Card";
-      const rarity = pull.rarity || pull.tier || "Unknown";
-      const value = pull.valueUsd ?? pull.priceUsd ?? pull.price ?? null;
       return `
         <article class="pack-card">
           <div class="pack-header">
-            <div class="pack-title">
-              <div>${cardName}</div>
-              <div class="pack-creator">${packName}</div>
-            </div>
+            <div class="pack-title">${p.name}</div>
             <div class="pack-meta">
-              <span class="pack-price">${formatUsd(value)}</span>
-              <span class="pack-creator">${rarity}</span>
+              <span class="pack-price">${p.price}</span>
+              <span class="pack-creator">by ${p.creator}</span>
             </div>
           </div>
+          <div class="pack-badges">${badges.join("")}</div>
           <div class="card-actions">
-            <button class="btn-mini">List / Trade</button>
-            <button class="btn-mini">Mark For Swap</button>
+            <button class="btn-mini">View</button>
+            <button class="btn-mini">Open</button>
+            <button class="btn-mini">Trade</button>
           </div>
         </article>
       `;
     })
     .join("");
+
+  const metrics = $("#trading-metrics");
+  if (metrics) {
+    metrics.innerHTML = `
+      <div class="metric-card">
+        <div class="metric-label">Live floor (mock)</div>
+        <div class="metric-value">$0.22 → $0.46</div>
+        <div class="metric-sub">Tiny Legends 2 & Aura Maxxed dominerar.</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">24h pulls (mock)</div>
+        <div class="metric-value">3 240 packs</div>
+        <div class="metric-sub">SpawnEngine wallets står för 18%.</div>
+      </div>
+    `;
+  }
 }
 
-function renderOverview() {
-  const container = document.getElementById("overviewMetrics");
-  if (!container) return;
+function renderInventory() {
+  const grid = $("#inventory-grid");
+  if (!grid) return;
 
-  const all = state.packsAll || [];
-  const verified = state.packsVerified || [];
-  const pulls = state.recentPulls || [];
+  const activeFilter = $("#inventory-filters .filter-chip.active")?.dataset.filter || "all";
 
-  const totalPacks = all.length;
-  const verifiedCount = verified.length;
-  const totalRecentVolume = pulls.reduce((acc, p) => {
-    const v = p.valueUsd ?? p.priceUsd ?? p.price ?? 0;
-    return isNaN(v) ? acc : acc + Number(v);
-  }, 0);
+  const filtered = demoInventory.filter((p) => {
+    if (activeFilter === "all") return true;
+    if (activeFilter === "for-trade") return p.status === "for-trade";
+    if (activeFilter === "sealed") return p.status === "sealed";
+    if (activeFilter === "grail") return p.status === "grail";
+    return true;
+  });
 
-  container.innerHTML = `
+  grid.innerHTML = filtered
+    .map(
+      (p) => `
+      <article class="pack-card">
+        <div class="pack-header">
+          <div class="pack-title">${p.name}</div>
+          <div class="pack-meta">
+            <span>${p.value}</span>
+            <span class="pack-creator">${p.status.toUpperCase()}</span>
+          </div>
+        </div>
+        <div class="pack-badges">
+          <span class="badge badge-supply">${p.rarity}</span>
+        </div>
+        <div class="card-actions">
+          <button class="btn-mini">List</button>
+          <button class="btn-mini">Mark as Grail</button>
+        </div>
+      </article>
+    `
+    )
+    .join("");
+
+  const metrics = $("#inventory-metrics");
+  if (metrics) {
+    const total = demoInventory.length;
+    const legends = demoInventory.filter((p) => p.rarity === "legendary").length;
+    metrics.innerHTML = `
+      <div class="metric-card">
+        <div class="metric-label">Total packs</div>
+        <div class="metric-value">${total}</div>
+        <div class="metric-sub">Mockat antal för UI.</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Legendaries</div>
+        <div class="metric-value">${legends}</div>
+        <div class="metric-sub">+ foils när vi kopplar riktiga data.</div>
+      </div>
+    `;
+  }
+}
+
+function renderLuckTables() {
+  const tblLuck = $("#table-luckiest");
+  const tblUnlucky = $("#table-unlucky");
+  if (tblLuck) {
+    tblLuck.innerHTML =
+      `<tr><th>Wallet</th><th>Pack</th><th>Hit</th><th>Spent</th><th>Now worth</th></tr>` +
+      luckiestPulls
+        .map(
+          (r) =>
+            `<tr><td>${r.wallet}</td><td>${r.pack}</td><td>${r.hit}</td><td>${r.spent}</td><td>${r.value}</td></tr>`
+        )
+        .join("");
+  }
+  if (tblUnlucky) {
+    tblUnlucky.innerHTML =
+      `<tr><th>Wallet</th><th>Pack</th><th>Result</th><th>Spent</th></tr>` +
+      unluckyPulls
+        .map(
+          (r) =>
+            `<tr><td>${r.wallet}</td><td>${r.pack}</td><td>${r.hit}</td><td>${r.spent}</td></tr>`
+        )
+        .join("");
+  }
+}
+
+function renderStats() {
+  const metrics = $("#stats-metrics");
+  if (metrics) {
+    metrics.innerHTML = `
+      <div class="metric-card">
+        <div class="metric-label">SpawnEngine XP (mock)</div>
+        <div class="metric-value">524.6K XP</div>
+        <div class="metric-sub">Direkt inspirerat från Vibe men ditt system.</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Daily pulls (mock)</div>
+        <div class="metric-value">1 120</div>
+        <div class="metric-sub">När vi kopplar API blir detta live.</div>
+      </div>
+    `;
+  }
+
+  const tbl = $("#stats-top-wallets");
+  if (tbl) {
+    tbl.innerHTML =
+      `<tr><th>Wallet</th><th>Pull score</th><th>Pulls</th><th>Legends</th></tr>` +
+      statsWallets
+        .map(
+          (w) =>
+            `<tr><td>${w.wallet}</td><td>${w.score}</td><td>${w.pulls}</td><td>${w.legends}</td></tr>`
+        )
+        .join("");
+  }
+}
+
+function renderVerified() {
+  const grid = $("#verified-grid");
+  if (!grid) return;
+
+  const statusChip = (ok) =>
+    ok ? '<span class="badge badge-verified">Linked</span>' : '<span class="badge">Not linked</span>';
+
+  grid.innerHTML = `
     <div class="metric-card">
-      <div class="metric-label">Total packs (visible)</div>
-      <div class="metric-value">${totalPacks}</div>
-      <div class="metric-sub">Fetched via Wield /market/cardpacks</div>
+      <div class="metric-label">X (Twitter)</div>
+      <div class="metric-value">Identity Sync</div>
+      <div class="metric-sub">Status: ${statusChip(state.verified.x)}</div>
     </div>
     <div class="metric-card">
-      <div class="metric-label">Verified series</div>
-      <div class="metric-value">${verifiedCount}</div>
-      <div class="metric-sub">Auto-detected verified collections</div>
+      <div class="metric-label">Farcaster</div>
+      <div class="metric-value">Warp handle</div>
+      <div class="metric-sub">Status: ${statusChip(state.verified.farcaster)}</div>
     </div>
     <div class="metric-card">
-      <div class="metric-label">Recent pull volume</div>
-      <div class="metric-value">${formatUsd(totalRecentVolume)}</div>
-      <div class="metric-sub">Based on last ${pulls.length} pulls</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Creator earnings mode</div>
-      <div class="metric-value">10–50% to creators</div>
-      <div class="metric-sub">Configured in SpawnEngine contracts</div>
+      <div class="metric-label">Base App</div>
+      <div class="metric-value">Onchain history</div>
+      <div class="metric-sub">Status: ${statusChip(state.verified.base)}</div>
     </div>
   `;
 }
 
-function renderActivity() {
-  const container = document.getElementById("activityFeed");
-  if (!container) return;
+function renderDeploy() {
+  const grid = $("#deploy-grid");
+  if (!grid) return;
 
-  const pulls = state.recentPulls || [];
-  if (pulls.length === 0) {
-    container.innerHTML =
-      '<p class="muted">No pulls yet – waiting for activity from Wield.</p>';
-    return;
-  }
+  const cards = [
+    {
+      title: "Vibe-style Pack NFTs",
+      desc: "Boosterbox / Wield-pack kompatibla serier.",
+      id: "pack",
+    },
+    {
+      title: "Reward Token (ERC20)",
+      desc: "XP / points / bonus-token till dina collectors.",
+      id: "token",
+    },
+    {
+      title: "Lootbox / Airdrop ERC1155",
+      desc: "Batchar, mystery loot & event-drops.",
+      id: "loot",
+    },
+    {
+      title: "Utility / Access NFT",
+      desc: "Pass till miniappar, Discord eller specialdrops.",
+      id: "utility",
+    },
+  ];
 
-  container.innerHTML = pulls
-    .slice(0, 25)
-    .map((pull) => {
-      const wallet = pull.buyer || pull.wallet || pull.owner || "0x…";
-      const packName = pull.packName || pull.series || "Pack";
-      const cardName = pull.cardName || pull.name || "Card";
-      const rarity = pull.rarity || pull.tier || "Unknown rarity";
-      const value = pull.valueUsd ?? pull.priceUsd ?? pull.price ?? null;
-
-      return `
-        <div class="activity-item">
-          <div class="activity-main">
-            <div class="activity-wallet">${shortAddress(wallet)} pulled</div>
-            <div class="activity-pack">${cardName} · ${packName}</div>
-          </div>
-          <div class="activity-meta">
-            <div>${rarity}</div>
-            <div>${formatUsd(value)}</div>
-          </div>
+  grid.innerHTML = cards
+    .map(
+      (c) => `
+      <article class="pack-card">
+        <div class="pack-header">
+          <div class="pack-title">${c.title}</div>
         </div>
-      `;
-    })
-    .join("");
-}
-
-function renderCreators() {
-  const container = document.getElementById("creatorList");
-  if (!container) return;
-
-  const creators = state.verifiedCreators || [];
-  if (creators.length === 0) {
-    container.innerHTML =
-      '<p class="muted">No verified creators detected yet. Check /market/cardpacks?verified=true.</p>';
-    return;
-  }
-
-  container.innerHTML = creators
-    .map((c) => {
-      return `
-      <article class="creator-card">
-        <div class="creator-name">${c.anyName}</div>
-        <div class="creator-addr">${shortAddress(c.creator)}</div>
-        <div class="creator-stats">
-          <span>Packs: ${c.packs}</span>
-          <span>Approx volume: ${formatUsd(c.totalVolumeUsd)}</span>
+        <div class="pack-badges">
+          <span class="badge badge-supply">Deploy mode</span>
+        </div>
+        <p class="metric-sub">${c.desc}</p>
+        <div class="card-actions">
+          <button class="btn-mini" data-deploy="${c.id}">Prepare Deploy</button>
         </div>
       </article>
-    `;
-    })
+    `
+    )
     .join("");
+
+  grid.querySelectorAll("[data-deploy]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.deploy;
+      alert(
+        `Deploy-mode "${id}" är UI-mock just nu.\n\nNär Hardhat-scriptet är klart kopplar vi detta till /scripts/deploy*.ts`
+      );
+    });
+  });
 }
 
-// ---------- TICKER ----------
+// ----- Luck meter -----
+function initLuckMeter() {
+  const fill = $("#luck-fill");
+  const label = $("#luck-label");
+  if (!fill || !label) return;
 
-function renderTicker() {
-  const el = document.getElementById("tickerContent");
-  if (!el) return;
-
-  const pulls = state.recentPulls || [];
-  if (pulls.length === 0) {
-    el.textContent = "Waiting for pulls from Wield /vibe/boosterbox/recent…";
-    return;
+  function update() {
+    const value = Math.floor(30 + Math.random() * 60); // 30–90%
+    fill.style.width = value + "%";
+    label.textContent = `Luck (mock): ${value}% · ändras live när du öppnar packs sen.`;
   }
 
-  const items = pulls.slice(0, 30).map((pull) => {
-    const wallet = shortAddress(
-      pull.buyer || pull.wallet || pull.owner || "0x…"
-    );
-    const packName = pull.packName || pull.series || "Pack";
-    const cardName = pull.cardName || pull.name || "Card";
-    const rarity = pull.rarity || pull.tier || "Unknown";
-    const value = pull.valueUsd ?? pull.priceUsd ?? pull.price ?? null;
+  update();
+  setInterval(update, 3500);
+}
 
-    return `${wallet} just pulled ${rarity} ${cardName} from ${packName} – ${formatUsd(
-      value
-    )}`;
+// ----- Pack map (canvas) -----
+function initPackMap() {
+  const canvas = document.getElementById("pack-map-canvas");
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  const resize = () => {
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * window.devicePixelRatio;
+    canvas.height = rect.height * window.devicePixelRatio;
+    ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+    draw();
+  };
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const nodes = [
+      { x: 80, y: 120, r: 26, color: "#3dffb8", label: "TL2" },
+      { x: 200, y: 80, r: 22, color: "#ff1744", label: "Foil" },
+      { x: 300, y: 150, r: 18, color: "#ffeb3b", label: "Aura" },
+      { x: 180, y: 200, r: 20, color: "#7c4dff", label: "Myth" },
+    ];
+
+    ctx.strokeStyle = "rgba(255,255,255,0.18)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(nodes[0].x, nodes[0].y);
+    for (let i = 1; i < nodes.length; i++) {
+      ctx.lineTo(nodes[i].x, nodes[i].y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+
+    nodes.forEach((n) => {
+      const gradient = ctx.createRadialGradient(n.x - 4, n.y - 6, 4, n.x, n.y, n.r);
+      gradient.addColorStop(0, "#ffffff");
+      gradient.addColorStop(0.4, n.color);
+      gradient.addColorStop(1, "rgba(0,0,0,0.9)");
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "10px system-ui";
+      ctx.textAlign = "center";
+      ctx.fillText(n.label, n.x, n.y + n.r + 12);
+    });
+  }
+
+  resize();
+  window.addEventListener("resize", resize);
+}
+
+// ----- Chat -----
+function initChat() {
+  const box = $("#chat-messages");
+  const input = $("#chat-input");
+  const send = $("#chat-send");
+  if (!box || !input || !send) return;
+
+  function addMessage(from, text) {
+    const div = document.createElement("div");
+    div.className = "msg";
+    div.innerHTML = `<div class="msg-from">${from}</div><div class="msg-text">${text}</div>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  }
+
+  send.addEventListener("click", () => {
+    const v = input.value.trim();
+    if (!v) return;
+    addMessage(state.wallet || "you · 0x…", v);
+    input.value = "";
   });
 
-  const full = items.concat(items).join("  •  ");
-  el.textContent = full;
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      send.click();
+    }
+  });
+
+  addMessage("system", "Wallet-to-wallet chat kommer här – mockade meddelanden just nu.");
 }
 
-function startTickerLoop() {
-  setInterval(async () => {
-    await loadRecentPulls();
-    buildDerivedData();
-    renderActivity();
-    renderForTrade();
-    renderTicker();
-    updateSyncStatus();
-  }, 30000);
+// ----- Wallet & theme -----
+function updateWalletUI() {
+  const statusWallet = $("#status-wallet");
+  const settingsWallet = $("#settings-wallet");
+  if (statusWallet) statusWallet.textContent = state.wallet || "Not connected";
+  if (settingsWallet)
+    settingsWallet.textContent = state.wallet ? `Connected: ${state.wallet}` : "Not connected.";
 }
 
-function startActivityRefreshLoop() {
-  setInterval(async () => {
-    await loadAllPacks();
-    await loadVerifiedPacks();
-    buildDerivedData();
-    const activeFilter =
-      document
-        .querySelector(".filter-chip.active")
-        ?.getAttribute("data-packfilter") || "all";
-    renderTradingCards(activeFilter);
-    renderOverview();
-    renderCreators();
-    updateSyncStatus();
-  }, 60000);
+function initWalletButtons() {
+  const mainBtn = $("#btn-connect");
+  const setConnect = $("#btn-settings-connect");
+  const setDisconnect = $("#btn-settings-disconnect");
+
+  function connect() {
+    // Mockad address
+    state.wallet = "0x596a…08ff";
+    updateWalletUI();
+    $("#status-sync").textContent = "synced (mock)";
+  }
+
+  function disconnect() {
+    state.wallet = null;
+    updateWalletUI();
+    $("#status-sync").textContent = "waiting…";
+  }
+
+  [mainBtn, setConnect].forEach((btn) => {
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      if (state.wallet) {
+        // redan connected
+        alert("Wallet already mocked as connected.");
+      } else {
+        connect();
+      }
+    });
+  });
+
+  if (setDisconnect) setDisconnect.addEventListener("click", disconnect);
 }
+
+function initTheme() {
+  const previews = $$(".theme-preview");
+  const statusTheme = $("#status-theme");
+
+  previews.forEach((p) => {
+    p.addEventListener("click", () => {
+      const theme = p.dataset.theme;
+      if (theme !== "dark") {
+        alert("Endast dark theme är aktiverat just nu (light blir editor-läge senare).");
+        return;
+      }
+      previews.forEach((x) => x.classList.remove("active"));
+      p.classList.add("active");
+      state.theme = theme;
+      if (statusTheme) statusTheme.textContent = "Dark";
+      document.documentElement.style.backgroundColor = "#03010b";
+    });
+  });
+}
+
+// ----- Verified buttons -----
+function initVerifiedButtons() {
+  const btnX = $("#btn-verify-x");
+  const btnFc = $("#btn-verify-fc");
+  const btnBase = $("#btn-verify-base");
+
+  if (btnX)
+    btnX.addEventListener("click", () => {
+      state.verified.x = true;
+      alert("Mock: X account linked.");
+      renderVerified();
+    });
+  if (btnFc)
+    btnFc.addEventListener("click", () => {
+      state.verified.farcaster = true;
+      alert("Mock: Farcaster handle linked.");
+      renderVerified();
+    });
+  if (btnBase)
+    btnBase.addEventListener("click", () => {
+      state.verified.base = true;
+      alert("Mock: Base activity verified.");
+      renderVerified();
+    });
+}
+
+// ----- Filters -----
+function initFilters() {
+  $("#trading-filters")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".filter-chip");
+    if (!btn) return;
+    $$("#trading-filters .filter-chip").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    renderTrading();
+  });
+
+  $("#inventory-filters")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".filter-chip");
+    if (!btn) return;
+    $$("#inventory-filters .filter-chip").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    renderInventory();
+  });
+}
+
+// ----- Creator Forge buttons -----
+function initCreatorForge() {
+  $("#btn-upload-mock")?.addEventListener("click", () => {
+    alert("Mock: 42 images ‘uploaded’ till Creator Forge.");
+    $("#forge-rarity-dist").textContent = "Common 15 · Rare 14 · Epic 6 · Legendary 6 · Mythic 1";
+  });
+
+  $("#btn-generate-rarity")?.addEventListener("click", () => {
+    alert("Mock: Rarity distribution calculated.");
+    $("#forge-rarity-dist").textContent = "Common 60% · Rare 25% · Epic 10% · Legendary 4% · Mythic 1%";
+  });
+
+  $("#btn-generate-foil")?.addEventListener("click", () => {
+    alert("Mock: Foil previews generated (Base Shine · Toxic · Neon Prism).");
+  });
+}
+
+// ----- Init -----
+document.addEventListener("DOMContentLoaded", () => {
+  initTabs();
+  initTicker();
+  initFilters();
+  renderTrading();
+  renderInventory();
+  renderLuckTables();
+  renderStats();
+  renderVerified();
+  renderDeploy();
+  initLuckMeter();
+  initPackMap();
+  initChat();
+  initWalletButtons();
+  initTheme();
+  initVerifiedButtons();
+  initCreatorForge();
+  updateWalletUI();
+});
