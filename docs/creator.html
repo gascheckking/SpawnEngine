@@ -1,29 +1,67 @@
 <!doctype html>
 <html>
 <head>
-  <link rel="stylesheet" href="/css/style.css" />
   <meta charset="utf-8">
-  <title>Create Series — SpawnEngine Pack Factory</title>
+  <title>SpawnEngine — Create Pack Series</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="/css/style.css" />
+
   <style>
-    body{font-family:system-ui,Arial;margin:24px;max-width:760px;background:#05030b;color:#f5f5ff}
-    h1{margin-top:0}
-    input,button{padding:10px;border:1px solid #333;border-radius:8px;background:#080414;color:#f5f5ff}
-    input{flex:1}
-    button{cursor:pointer;background:#ff1744;border-color:#ff1744;color:#fff;font-weight:600}
-    button:hover{filter:brightness(1.05)}
-    .row{display:flex;gap:8px;align-items:center;margin:10px 0}
-    .card{border:1px solid #252036;border-radius:12px;padding:16px;margin:12px 0;background:#0a0516}
-    label{min-width:160px;font-size:0.9rem}
-    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
-    #out{margin-top:12px;font-size:0.9rem;white-space:pre-wrap}
-    a{color:#3dffb8}
+    body{
+      font-family: system-ui,Arial;
+      margin: 24px;
+      max-width: 760px;
+      background: #05030b;
+      color: #f5f5ff;
+    }
+    h1{ margin-top:0 }
+    input,button{
+      padding:10px;
+      border:1px solid #333;
+      border-radius:8px;
+      background:#080414;
+      color:#f5f5ff;
+    }
+    input{ flex:1 }
+    button{
+      cursor:pointer;
+      background:#ff1744;
+      border-color:#ff1744;
+      color:#fff;
+      font-weight:600;
+    }
+    button:hover{ filter:brightness(1.05) }
+    .row{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      margin:10px 0;
+    }
+    .card{
+      border:1px solid #252036;
+      border-radius:12px;
+      padding:16px;
+      margin:12px 0;
+      background:#0a0516;
+    }
+    label{ min-width:160px; font-size:0.9rem }
+    .mono{ font-family:ui-monospace,Menlo,Consolas,monospace }
+    #out{
+      margin-top:12px;
+      font-size:0.9rem;
+      white-space:pre-wrap;
+    }
+    a{ color:#3dffb8 }
   </style>
 </head>
+
 <body>
+
   <h1>Create Token Pack Series</h1>
+
   <p>
-    Connect wallet → fill fields → Deploy via
+    Connect your wallet → fill the fields → deploy using
     <span class="mono">PackFactory.deployTokenSeries()</span>.
   </p>
 
@@ -32,35 +70,44 @@
       <button id="connect">Connect Wallet</button>
       <span id="addr"></span>
     </div>
+
     <div class="row">
       <label>Factory address</label>
       <input id="factory" placeholder="0x...PackFactory">
     </div>
+
     <div class="row">
-      <label>ReserveGuard address</label>
+      <label>ReserveGuard</label>
       <input id="guard" placeholder="0x...ReserveGuard">
     </div>
+
     <div class="row">
       <label>Payout ERC20</label>
-      <input id="token" placeholder="0x...ERC20">
+      <input id="token" placeholder="0x...ERC20 token">
     </div>
+
     <div class="row">
-      <label>Pack price (raw wei)</label>
+      <label>Pack price (wei)</label>
       <input id="price" placeholder="1000000000000000000">
     </div>
+
     <div class="row">
-      <label>Creator recipient</label>
+      <label>Creator</label>
       <input id="creator" placeholder="0x...creator wallet">
     </div>
+
     <div class="row">
       <button id="deploy">Deploy Series</button>
     </div>
+
     <div id="out"></div>
   </div>
 
   <script type="module">
     import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.11.1/dist/ethers.min.js";
-    let signer; const $ = id => document.getElementById(id);
+
+    let signer;
+    const $ = id => document.getElementById(id);
 
     const factoryAbi = [
       "function deployTokenSeries(address payoutToken,uint256 packPrice,address creatorRecipient,address reserveGuard) returns (address)",
@@ -69,8 +116,10 @@
 
     $("connect").onclick = async () => {
       if (!window.ethereum) return alert("Install a wallet like MetaMask");
+
       const provider = new ethers.BrowserProvider(window.ethereum);
       signer = await provider.getSigner();
+
       const addr = await signer.getAddress();
       $("addr").textContent = addr.slice(0,6)+"…"+addr.slice(-4);
     };
@@ -78,30 +127,43 @@
     $("deploy").onclick = async () => {
       try {
         if (!signer) return alert("Connect wallet first");
-        const f = new ethers.Contract($("factory").value.trim(), factoryAbi, signer);
+
+        const factory = $("factory").value.trim();
+        const token = $("token").value.trim();
+        const price = $("price").value.trim();
+        const creator = $("creator").value.trim();
+        const guard = $("guard").value.trim();
+
+        const f = new ethers.Contract(factory, factoryAbi, signer);
+
         const tx = await f.deployTokenSeries(
-          $("token").value.trim(),
-          BigInt($("price").value.trim()),
-          $("creator").value.trim(),
-          $("guard").value.trim()
+          token,
+          BigInt(price),
+          creator,
+          guard
         );
+
         $("out").textContent = "Deploying… " + tx.hash;
+
         const rc = await tx.wait();
+
         const ev = rc.logs.find(l => l.fragment?.name === "SeriesDeployed");
+
         if (ev) {
           $("out").innerHTML = `
             ✓ Deployed series:<br><b>${ev.args[0]}</b><br><br>
             creator: ${ev.args[1]}<br>
             payoutToken: ${ev.args[2]}<br>
-            packPrice: ${ev.args[3].toString()}<br>
+            packPrice: ${ev.args[3]}<br>
             guard: ${ev.args[4]}<br><br>
-            Open <a href="./index.html">SpawnEngine UI</a> and paste the series address.
+            <a href="/docs/index.html">Back to SpawnEngine UI</a>
           `;
         } else {
-          $("out").textContent = "Deployed (check explorer logs for SeriesDeployed).";
+          $("out").textContent = "Deployed (check explorer logs)";
         }
-      } catch (e) {
-        $("out").textContent = "Deploy failed: "+(e?.message||e);
+
+      } catch (err) {
+        $("out").textContent = "Deploy failed: " + (err?.message || err);
       }
     };
   </script>
