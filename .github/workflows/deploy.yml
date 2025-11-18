@@ -11,6 +11,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,8 +36,6 @@ jobs:
           npx hardhat run scripts/deploy.ts --network baseSepolia | tee deploy.log
           echo "GUARD=$(grep -i 'ReserveGuard:' deploy.log | awk '{print $2}')" >> $GITHUB_ENV
           echo "FACTORY=$(grep -i 'PackFactory' deploy.log | awk '{print $3}')" >> $GITHUB_ENV
-          echo "Guard: $GUARD"
-          echo "Factory: $FACTORY"
 
       - name: Deploy Demo TokenPackSeries (optional)
         if: ${{ github.event.inputs.deploy_demo_series == 'yes' }}
