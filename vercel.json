@@ -1,15 +1,12 @@
 {
   "version": 2,
   "builds": [
-    { "src": "docs/index.html", "use": "@vercel/static" },
+    { "src": "index.html", "use": "@vercel/static" },
     { "src": "docs/creator.html", "use": "@vercel/static" },
     { "src": "docs/(.*)", "use": "@vercel/static" },
-
     { "src": "css/style.css", "use": "@vercel/static" },
     { "src": "css/(.*)", "use": "@vercel/static" },
-
     { "src": "app.js", "use": "@vercel/static" },
-
     { "src": "api/wield/(.*)", "use": "@vercel/node" }
   ],
   "routes": [
@@ -21,7 +18,8 @@
     { "src": "^/app.js$", "dest": "/app.js" },
 
     { "src": "^/creator$", "dest": "/docs/creator.html" },
-    { "src": "^/$", "dest": "/docs/index.html" },
+
+    { "src": "^/$", "dest": "/index.html" },
 
     { "src": "^(.*)$", "dest": "/$1" }
   ]
