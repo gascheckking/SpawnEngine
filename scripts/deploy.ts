@@ -11,21 +11,32 @@ async function main() {
   console.log("  Platform fee recipient:", platform);
 
   // ReserveGuard params
-  const mythicMult = ethers.parseEther("200"); // 200x
+  const mythicMult = ethers.parseEther("200"); // 200x multiplier
   const bufferBps = 1000; // +10%
 
+  // ------------------------
+  // Deploy ReserveGuard
+  // ------------------------
   const Guard = await ethers.getContractFactory("ReserveGuard");
   const guard = await Guard.deploy(mythicMult, bufferBps);
   await guard.waitForDeployment();
   const guardAddr = await guard.getAddress();
+
   console.log("ReserveGuard deployed at:", guardAddr);
 
+  // ------------------------
+  // Deploy PackFactory
+  // ------------------------
   const Factory = await ethers.getContractFactory("PackFactory");
   const factory = await Factory.deploy(platform);
   await factory.waitForDeployment();
   const factoryAddr = await factory.getAddress();
+
   console.log("PackFactory deployed at:", factoryAddr);
 
+  // ------------------------
+  // Output summary
+  // ------------------------
   console.log("==== COPY TO ACTIONS ENV OR NOTES ====");
   console.log("GUARD", guardAddr);
   console.log("FACTORY", factoryAddr);
