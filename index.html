@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SpawnEngine — Onchain Pack Factory</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- CSS ligger i /css/style.css -->
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-logo">SE</div>
+        <div class="brand-copy">
+          <h1>SpawnEngine — Onchain Swap/Trade</h1>
+          <p>Pack engine för buys, pulls & onchain collectors</p>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="network-pill" id="network-pill">Base · Vibechain-style packs</div>
+        <button class="btn-primary" id="btn-connect">Connect Wallet</button>
+      </div>
+    </header>
+
+    <!-- Ticker -->
+    <div class="ticker-bar">
+      <div class="ticker-label">Live pulls</div>
+      <div class="ticker-track">
+        <div class="ticker-content" id="ticker-text">
+          Loading recent pulls…
+        </div>
+      </div>
+    </div>
+
+    <!-- Status strip -->
+    <div class="status-strip" id="status-strip">
+      <div class="status-chip">Wallet: <span id="status-wallet">Not connected</span></div>
+      <div class="status-chip">Wield API: <span id="status-wield">Unknown</span></div>
+      <div class="status-chip">Sync: <span id="status-sync">waiting…</span></div>
+      <div class="status-chip">Theme: <span id="status-theme">Dark</span></div>
+    </div>
+
+    <!-- Tabs -->
+    <nav class="tab-bar">
+      <button class="tab-button active" data-view="view-trading">Trading</button>
+      <button class="tab-button" data-view="view-inventory">Inventory</button>
+      <button class="tab-button" data-view="view-creator">Creator Forge</button>
+      <button class="tab-button" data-view="view-pulllab">Pull Lab</button>
+      <button class="tab-button" data-view="view-maps">Pack Maps</button>
+      <button class="tab-button" data-view="view-verified">Warp Verified</button>
+      <button class="tab-button" data-view="view-chat">Bubble / Chat</button>
+      <button class="tab-button" data-view="view-stats">Stats</button>
+      <button class="tab-button" data-view="view-deploy">Deploy Center</button>
+      <button class="tab-button" data-view="view-settings">Settings</button>
+    </nav>
+
+    <!-- Views -->
+    <div class="view-container">
+
+      <!-- Trading -->
+      <section class="view active" id="view-trading">
+        <div class="view-header">
+          <h2>Pack Trading <span class="tag">Live</span></h2>
+          <p>Open, collect & trade packs via Wield-powered markets.</p>
+        </div>
+
+        <div class="filter-row" id="trading-filters">
+          <button class="filter-chip active" data-filter="all">All packs</button>
+          <button class="filter-chip" data-filter="new">New</button>
+          <button class="filter-chip" data-filter="verified">Verified</button>
+          <button class="filter-chip" data-filter="bounty">Big bounties</button>
+        </div>
+
+        <div class="card-grid compact" id="trading-grid"></div>
+
+        <div class="panel">
+          <h3>Marketplace Signals</h3>
+          <div class="metric-grid" id="trading-metrics"></div>
+        </div>
+      </section>
+
+      <!-- Inventory -->
+      <section class="view" id="view-inventory">
+        <div class="view-header">
+          <h2>My Packs / For Trade</h2>
+          <p>Packs i din wallet, redo att listas eller swappas.</p>
+        </div>
+
+        <div class="filter-row" id="inventory-filters">
+          <button class="filter-chip active" data-filter="all">All</button>
+          <button class="filter-chip" data-filter="for-trade">For Trade</button>
+          <button class="filter-chip" data-filter="sealed">Sealed</button>
+          <button class="filter-chip" data-filter="grail">Grails</button>
+        </div>
+
+        <div class="card-grid compact" id="inventory-grid"></div>
+
+        <div class="panel">
+          <h3>Inventory Summary</h3>
+          <div class="metric-grid" id="inventory-metrics"></div>
+        </div>
+      </section>
+
+      <!-- Creator Forge -->
+      <section class="view" id="view-creator">
+        <div class="view-header">
+          <h2>Creator Forge <span class="tag">Build</span></h2>
+          <p>Bygg nya serier direkt i SpawnEngine — upload, rarity, foil, deploy.</p>
+        </div>
+
+        <div class="panel">
+          <h3>Step 1 — Art Upload</h3>
+          <p class="muted">Dra in dina bilder (upp till 100) eller välj lokalt.</p>
+          <div class="button-row">
+            <button class="btn-primary" id="btn-upload-mock">Mock upload</button>
+            <button class="btn-ghost">Use Tiny Legends template</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Step 2 — Rarity & Foil Engine</h3>
+          <p class="muted">Auto-fördela Common → Mythic och skapa foil-lager.</p>
+          <div class="metric-grid">
+            <div class="metric-card">
+              <div class="metric-label">Common / Rare / Epic / Legendary / Mythic</div>
+              <div class="metric-value" id="forge-rarity-dist">–</div>
+              <div class="metric-sub">Auto-balans efter bildcount.</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Foil styles</div>
+              <div class="metric-value">Base Shine · Toxic · Neon Prism</div>
+              <div class="metric-sub">Välj i Deploy Center senare.</div>
+            </div>
+          </div>
+          <div class="button-row">
+            <button class="btn-primary" id="btn-generate-rarity">Generate Rarity</button>
+            <button class="btn-ghost" id="btn-generate-foil">Preview Foils</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Step 3 — Series Config</h3>
+          <div class="metric-grid">
+            <div class="metric-card">
+              <div class="metric-label">Series name</div>
+              <div class="metric-value">Tiny Legends 2 · Foil Realms · SpawnEngine Packs</div>
+              <div class="metric-sub">Sätt exakt i Deploy Center.</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Chain / Market</div>
+              <div class="metric-value">Base · Vibe · Zora-ready</div>
+              <div class="metric-sub">Multi-venue från samma deploy.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pull Lab -->
+      <section class="view" id="view-pulllab">
+        <div class="view-header">
+          <h2>Pull Lab <span class="tag">Luck Engine</span></h2>
+          <p>Track luckiest pulls, cursed streaks & pack entropy per wallet.</p>
+        </div>
+
+        <div class="panel">
+          <h3>Luck Meter</h3>
+          <p class="muted">Live sim för din “pull luck” (mockad tills vi kopplar riktiga data).</p>
+          <div class="luck-meter">
+            <div class="luck-fill" id="luck-fill"></div>
+          </div>
+          <div class="metric-sub" id="luck-label">Luck: –</div>
+        </div>
+
+        <div class="panel">
+          <h3>Luckiest Pulls</h3>
+          <table class="stats-table" id="table-luckiest"></table>
+        </div>
+
+        <div class="panel">
+          <h3>Unlucky Survivors</h3>
+          <table class="stats-table" id="table-unlucky"></table>
+        </div>
+      </section>
+
+      <!-- Pack Maps -->
+      <section class="view" id="view-maps">
+        <div class="view-header">
+          <h2>Pack Maps <span class="tag">Bubble View</span></h2>
+          <p>Visualisera hur packs, creators och whales sitter ihop som bubblor.</p>
+        </div>
+
+        <canvas id="pack-map-canvas"></canvas>
+        <p class="metric-sub muted">
+          Mockad bubbelkarta – riktiga noder kopplas till Wield / onchain data sen.
+        </p>
+      </section>
+
+      <!-- Warp Verified -->
+      <section class="view" id="view-verified">
+        <div class="view-header">
+          <h2>Warp Verified</h2>
+          <p>Trippel-verifiering via X, Farcaster & Base-aktivitet.</p>
+        </div>
+
+        <div class="metric-grid" id="verified-grid"></div>
+
+        <div class="panel">
+          <h3>Verification Actions</h3>
+          <div class="button-row">
+            <button class="btn-primary" id="btn-verify-x">Link X</button>
+            <button class="btn-primary" id="btn-verify-fc">Link Farcaster</button>
+            <button class="btn-primary" id="btn-verify-base">Link Base App</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chat -->
+      <section class="view" id="view-chat">
+        <div class="view-header">
+          <h2>Wallet Bubbles / Chat</h2>
+          <p>Planerad funktion – wallet-to-wallet chat mellan collectors.</p>
+        </div>
+
+        <div class="bubble-layout">
+          <div class="bubble-column">
+            <div class="wallet-bubble">
+              <div class="wallet-id">0xfeet…sn1ff</div>
+              <div class="msg-text">“Just pulled a Legendary Foil Realms…”</div>
+            </div>
+            <div class="wallet-bubble">
+              <div class="wallet-id">0x1234…abcd</div>
+              <div class="msg-text">“Buying any sealed Tiny Legends under $5.”</div>
+            </div>
+          </div>
+          <div class="bubble-column">
+            <div class="chat-panel">
+              <div class="chat-messages" id="chat-messages"></div>
+              <div class="chat-input-row">
+                <input id="chat-input" placeholder="DM a wallet directly… (local mock)" />
+                <button class="btn-mini" id="chat-send">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stats -->
+      <section class="view" id="view-stats">
+        <div class="view-header">
+          <h2>Stats Engine</h2>
+          <p>Wallet rarity heatmap, whales, XP och mest aktiva packs.</p>
+        </div>
+
+        <div class="metric-grid" id="stats-metrics"></div>
+
+        <div class="panel">
+          <h3>Top Wallets by Pull Score</h3>
+          <table class="stats-table" id="stats-top-wallets"></table>
+        </div>
+      </section>
+
+      <!-- Deploy Center -->
+      <section class="view" id="view-deploy">
+        <div class="view-header">
+          <h2>Deploy Center <span class="tag">Contracts</span></h2>
+          <p>Fyra deploy-lägen: Vibe packs, rewards tokens, lootbox & utility NFTs.</p>
+        </div>
+
+        <div class="card-grid compact" id="deploy-grid"></div>
+
+        <div class="panel">
+          <h3>Next step</h3>
+          <p class="muted">
+            När Hardhat-scripten är helt spikade kopplar vi dessa knappar till riktiga deploy calls
+            (Base Sepolia / Base mainnet).
+          </p>
+        </div>
+      </section>
+
+      <!-- Settings -->
+      <section class="view" id="view-settings">
+        <div class="view-header">
+          <h2>Settings</h2>
+          <p>Wallet, API-proxy, theme. Ingen mer låst vy här.</p>
+        </div>
+
+        <div class="panel">
+          <h3>Wallet</h3>
+          <p class="muted">Status: <span id="settings-wallet">Not connected.</span></p>
+          <div class="button-row">
+            <button class="btn-primary" id="btn-settings-connect">Connect / Switch</button>
+            <button class="btn-ghost" id="btn-settings-disconnect">Disconnect</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Theme</h3>
+          <p class="muted">Dark mode är default. Light blir mer “editor-vy”.</p>
+          <div class="theme-preview-row">
+            <div class="theme-preview theme-dark active" data-theme="dark">
+              Dark · Neon Spawn
+            </div>
+            <div class="theme-preview disabled" data-theme="light">
+              Light · Creator Mode (kommer sen)
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="app-footer">
+      Built with <span class="spawn-spark">SpawnEngine</span> · Onchain Pack Factory · Powered by Wield API (soon)
+    </footer>
+  </div>
+
+  <!-- Frontend-logik -->
+  <script src="/app.js"></script>
+</body>
+</html>
