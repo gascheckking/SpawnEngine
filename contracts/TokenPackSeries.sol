@@ -19,7 +19,7 @@ contract TokenPackSeries is ERC721Enumerable, Ownable {
     uint256 public nextId = 1;
     uint256 public escrow;                 // 15% accumulation for payouts
 
-    // revenue splits (fixed v1) – these ger creators 50%, platform 35%, “treasury” 15%
+    // revenue splits (fixed v1) – creator 50%, platform 35%, treasury 15%
     uint256 public constant CREATOR_BPS = 5000;  // 50%
     uint256 public constant PLATFORM_BPS = 3500; // 35%
     uint256 public constant TREASURY_BPS = 1500; // 15%
@@ -38,7 +38,7 @@ contract TokenPackSeries is ERC721Enumerable, Ownable {
 
     // token state
     mapping(uint256 => bool) public opened;
-    // rarity: 0=unset, 1=Common, 2=Rare, 3=Legendary, 4=Mythic
+    // rarity: 1=Common, 2=Rare, 3=Legendary, 4=Mythic
     mapping(uint256 => uint8) public rarityOf;
 
     event PackBought(address indexed buyer, uint256 tokenId);
@@ -89,7 +89,16 @@ contract TokenPackSeries is ERC721Enumerable, Ownable {
 
     /// @notice MVP randomness. Replace with Chainlink VRF in v1.1.
     function _rand(bytes32 salt) internal view returns (uint256) {
-        return uint256(keccak256(abi.encodePacked(blockhash(block.number - 1), address(this), salt, msg.sender)));
+        return uint256(
+            keccak256(
+                abi.encodePacked(
+                    blockhash(block.number - 1),
+                    address(this),
+                    salt,
+                    msg.sender
+                )
+            )
+        );
     }
 
     function canOpen() public view returns (bool) {
@@ -98,7 +107,7 @@ contract TokenPackSeries is ERC721Enumerable, Ownable {
 
     function open(uint256 tokenId) external {
         require(ownerOf(tokenId) == msg.sender, "not owner");
-        require(!opened[tokenId], "already");
+        require(!opened[tokenId], "already opened");
         require(canOpen(), "RESERVE_LOW");
 
         opened[tokenId] = true;
@@ -128,7 +137,7 @@ contract TokenPackSeries is ERC721Enumerable, Ownable {
     }
 
     // =========================
-    // Burn/Gamble (config v1)
+    // Burn/Gamble v1
     // =========================
 
     // Commons: burn 5 opened commons -> 20% chance to mint 2 packs
@@ -142,7 +151,7 @@ contract TokenPackSeries is ERC721Enumerable, Ownable {
             _burn(id);
             burned++;
         }
-        bool success = (_rand(keccak256(abi.encodePacked(tokenIds))) % 100) < 20; // 20%
+        bool success = (_rand(keccak256(abi.encodePacked(tokenIds))) % 100) < 20;
         uint256 minted = 0;
         if (success) {
             _safeMint(msg.sender, nextId); minted++; nextId++;
@@ -156,7 +165,7 @@ contract TokenPackSeries is ERC721Enumerable, Ownable {
         require(ownerOf(tokenId) == msg.sender, "not owner");
         require(opened[tokenId] && rarityOf[tokenId] == 2, "not opened rare");
         _burn(tokenId);
-        bool success = (_rand(bytes32(tokenId)) % 100) < 30; // 30%
+        bool success = (_rand(bytes32(tokenId)) % 100) < 30;
         uint256 minted = 0;
         if (success) {
             _safeMint(msg.sender, nextId); minted++; nextId++;
@@ -170,10 +179,14 @@ contract TokenPackSeries is ERC721Enumerable, Ownable {
         require(ownerOf(tokenId) == msg.sender, "not owner");
         require(opened[tokenId] && rarityOf[tokenId] == 3, "not opened legendary");
         _burn(tokenId);
-        bool success = (_rand(bytes32(tokenId)) % 100) < 40; // 40%
+        bool success = (_rand(bytes32(tokenId)) % 100) < 40;
         uint256 minted = 0;
         if (success) {
-            for (uint256 i = 0; i < 5; i++) { _safeMint(msg.sender, nextId); minted++; nextId++; }
+            for (uint256 i = 0; i < 5; i++) {
+                _safeMint(msg.sender, nextId);
+                minted++;
+                nextId++;
+            }
         }
         emit BurnAttempt(msg.sender, 3, 1, success, minted);
     }
@@ -183,10 +196,14 @@ contract TokenPackSeries is ERC721Enumerable, Ownable {
         require(ownerOf(tokenId) == msg.sender, "not owner");
         require(opened[tokenId] && rarityOf[tokenId] == 4, "not opened mythic");
         _burn(tokenId);
-        bool success = (_rand(bytes32(tokenId)) % 100) < 45; // 45%
+        bool success = (_rand(bytes32(tokenId)) % 100) < 45;
         uint256 minted = 0;
         if (success) {
-            for (uint256 i = 0; i < 10; i++) { _safeMint(msg.sender, nextId); minted++; nextId++; }
+            for (uint256 i = 0; i < 10; i++) {
+                _safeMint(msg.sender, nextId);
+                minted++;
+                nextId++;
+            }
         }
         emit BurnAttempt(msg.sender, 4, 1, success, minted);
     }
