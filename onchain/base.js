@@ -1,27 +1,45 @@
-// /onchain/base.js
-import { ethers } from "ethers";
+// onchain/base.js
 
-const rpc = process.env.BASE_MAINNET_RPC || process.env.BASE_SEPOLIA_RPC;
+const { ethers } = require("ethers");
 
-export function getBaseProvider() {
+const rpc =
+  process.env.BASE_MAINNET_RPC ||
+  process.env.BASE_SEPOLIA_RPC ||
+  "https://sepolia.base.org";
+
+/**
+ * Base JSON-RPC provider (mainnet fallback to sepolia).
+ */
+function getBaseProvider() {
   return new ethers.JsonRpcProvider(rpc);
 }
 
-export async function getContractEvents(address, abi, fromBlock = 0) {
+/**
+ * Generic helper: fetch and parse all logs for a contract from fromBlock → latest.
+ * Returns an array of parsed events (ethers InterfaceLog objects).
+ */
+async function getContractEvents(address, abi, fromBlock = 0) {
   const provider = getBaseProvider();
   const contract = new ethers.Contract(address, abi, provider);
 
   const logs = await provider.getLogs({
     fromBlock,
     toBlock: "latest",
-    address
+    address,
   });
 
-  return logs.map(l => {
-    try {
-      return contract.interface.parseLog(l);
-    } catch (err) {
-      return null;
-    }
-  }).filter(Boolean);
+  return logs
+    .map((l) => {
+      try {
+        return contract.interface.parseLog(l);
+      } catch (_) {
+        return null;
+      }
+    })
+    .filter(Boolean);
 }
+
+module.exports = {
+  getBaseProvider,
+  getContractEvents,
+};
