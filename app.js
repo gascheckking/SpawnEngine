@@ -1,4 +1,4 @@
-// Enkel global state
+// Simple global state
 const state = {
   wallet: null,
   walletFull: null,
@@ -8,10 +8,10 @@ const state = {
     farcaster: false,
     base: false,
   },
-  activeSeries: null, // TokenPackSeries-adress (frontend-sparad)
+  activeSeries: null, // TokenPackSeries address (frontend only)
 };
 
-// Hjälp-funktioner
+// Helpers
 const $ = (q) => document.querySelector(q);
 const $$ = (q) => Array.from(document.querySelectorAll(q));
 const shorten = (addr) =>
@@ -45,51 +45,89 @@ function initTicker() {
 
   const messages = [
     "PackForge Hub online • monitoring Base pulls…",
-    "Mock series: Neon Draft · Prism Packs · Chaos Vault",
-    "Luckiest pull: Mythic Foil at $0.12 → floor $24.20",
-    "Unlucky survivor: 0xdead…beef • 0 / 400 legends pulled",
+    "Mock series: Neon Draft · Prism Vault · Chaos Forge · Mythgrid",
+    "Luckiest pull (mock): Mythic Foil at $0.12 → floor $24.20",
+    "Unluckiest run: 0xdead…beef • 0 / 400 legends pulled",
   ];
 
   el.textContent = messages.join("   •   ");
 }
 
-// ----- Dummy data -----
+// ----- Demo data -----
+// Trading-side demo packs (series-level)
 const demoPacks = [
   {
     name: "Neon Draft",
     creator: "spawnizz",
     price: "$0.24",
-    supply: "42 designs",
+    supply: "42 cards",
     tags: ["verified", "bounty", "new"],
   },
   {
     name: "Prism Vault",
     creator: "spawnizz",
     price: "$0.28",
-    supply: "36 designs",
+    supply: "36 cards",
     tags: ["verified"],
   },
   {
     name: "Chaos Forge",
     creator: "spawnizz",
     price: "$0.46",
-    supply: "24 designs",
+    supply: "24 cards",
     tags: ["new"],
   },
   {
     name: "Mythgrid",
     creator: "spawnizz",
     price: "$0.22",
-    supply: "18 designs",
+    supply: "18 cards",
     tags: [],
   },
 ];
 
+// Inventory demo cards — more like real “cards” with full specs
 const demoInventory = [
-  { name: "Neon Draft", status: "for-trade", rarity: "legendary", value: "$68.00" },
-  { name: "Prism Vault", status: "sealed", rarity: "mythic", value: "$32.00" },
-  { name: "Chaos Forge", status: "for-trade", rarity: "rare", value: "$4.20" },
-  { name: "Mythgrid", status: "grail", rarity: "legendary", value: "$120.00" },
+  {
+    pack: "Neon Draft",
+    cardName: "ND-017 · Prism Jester",
+    status: "for-trade",          // for-trade | sealed | grail
+    rarity: "Legendary",
+    condition: "Mint / Unplayed",
+    foil: "Toxic Foil",
+    estValue: "$68.00",
+    serial: "#17/250",
+  },
+  {
+    pack: "Prism Vault",
+    cardName: "PV-001 · Aurora Core",
+    status: "sealed",
+    rarity: "Mythic",
+    condition: "Sealed pack",
+    foil: "Base Shine",
+    estValue: "$32.00",
+    serial: "Pack #1/100",
+  },
+  {
+    pack: "Chaos Forge",
+    cardName: "CF-042 · Ember Jack",
+    status: "for-trade",
+    rarity: "Rare",
+    condition: "Lightly played",
+    foil: "Non-foil",
+    estValue: "$4.20",
+    serial: "#42/500",
+  },
+  {
+    pack: "Mythgrid",
+    cardName: "MG-007 · Grid Oracle",
+    status: "grail",
+    rarity: "Legendary",
+    condition: "Mint / Grail",
+    foil: "Neon Prism Foil",
+    estValue: "$120.00",
+    serial: "#7/50",
+  },
 ];
 
 const luckiestPulls = [
@@ -157,12 +195,12 @@ function renderTrading() {
       <div class="metric-card">
         <div class="metric-label">Live floor (mock)</div>
         <div class="metric-value">$0.22 → $0.46</div>
-        <div class="metric-sub">PackForge-skal tills riktiga priser hämtas.</div>
+        <div class="metric-sub">PackForge shell until real prices are fetched.</div>
       </div>
       <div class="metric-card">
         <div class="metric-label">24h pulls (mock)</div>
         <div class="metric-value">3 240 packs</div>
-        <div class="metric-sub">När vi kopplar Wield blir detta onchain stats.</div>
+        <div class="metric-sub">When Wield is wired, this becomes onchain stats.</div>
       </div>
     `;
   }
@@ -183,42 +221,66 @@ function renderInventory() {
   });
 
   grid.innerHTML = filtered
-    .map(
-      (p) => `
+    .map((p) => {
+      const statusLabel =
+        p.status === "for-trade"
+          ? "For Trade"
+          : p.status === "sealed"
+          ? "Sealed"
+          : p.status === "grail"
+          ? "Grail"
+          : p.status;
+
+      return `
       <article class="pack-card">
         <div class="pack-header">
-          <div class="pack-title">${p.name}</div>
+          <div class="pack-title">${p.cardName}</div>
           <div class="pack-meta">
-            <span>${p.value}</span>
-            <span class="pack-creator">${p.status.toUpperCase()}</span>
+            <span>${p.estValue}</span>
+            <span class="pack-creator">${statusLabel.toUpperCase()}</span>
           </div>
         </div>
+
         <div class="pack-badges">
           <span class="badge badge-supply">${p.rarity}</span>
+          <span class="badge">Series: ${p.pack}</span>
+          <span class="badge">${p.condition}</span>
+          <span class="badge">${p.foil}</span>
+          <span class="badge">${p.serial}</span>
         </div>
+
         <div class="card-actions">
-          <button class="btn-mini">List</button>
+          <button class="btn-mini">List on market</button>
           <button class="btn-mini">Mark as Grail</button>
+          <button class="btn-mini">View history</button>
         </div>
       </article>
-    `
-    )
+    `;
+    })
     .join("");
 
   const metrics = $("#inventory-metrics");
   if (metrics) {
     const total = demoInventory.length;
-    const legends = demoInventory.filter((p) => p.rarity === "legendary").length;
+    const legends = demoInventory.filter((p) => p.rarity.toLowerCase() === "legendary").length;
+    const mythics = demoInventory.filter((p) => p.rarity.toLowerCase() === "mythic").length;
+    const sealed = demoInventory.filter((p) => p.status === "sealed").length;
+
     metrics.innerHTML = `
       <div class="metric-card">
-        <div class="metric-label">Total packs</div>
+        <div class="metric-label">Total items</div>
         <div class="metric-value">${total}</div>
-        <div class="metric-sub">Mockat antal för UI.</div>
+        <div class="metric-sub">Cards and packs tracked in this wallet (mock).</div>
       </div>
       <div class="metric-card">
-        <div class="metric-label">Legendaries</div>
-        <div class="metric-value">${legends}</div>
-        <div class="metric-sub">+ foils när vi kopplar riktiga data.</div>
+        <div class="metric-label">Legendaries / Mythics</div>
+        <div class="metric-value">${legends} L · ${mythics} M</div>
+        <div class="metric-sub">Perfect flex number for screenshots.</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Sealed pieces</div>
+        <div class="metric-value">${sealed}</div>
+        <div class="metric-sub">Potential future pulls.</div>
       </div>
     `;
   }
@@ -256,12 +318,12 @@ function renderStats() {
       <div class="metric-card">
         <div class="metric-label">PackForge XP (mock)</div>
         <div class="metric-value">524.6K XP</div>
-        <div class="metric-sub">Din egen XP-motor, separat från Vibe.</div>
+        <div class="metric-sub">Your own XP engine, separate from Vibe.</div>
       </div>
       <div class="metric-card">
         <div class="metric-label">Daily pulls (mock)</div>
         <div class="metric-value">1 120</div>
-        <div class="metric-sub">Live när vi kopplar kontrakt + indexer.</div>
+        <div class="metric-sub">Becomes live once contracts + indexer are wired.</div>
       </div>
     `;
   }
@@ -312,22 +374,22 @@ function renderDeploy() {
   const cards = [
     {
       title: "Vibe-style Pack NFTs",
-      desc: "Boosterbox / Wield-pack kompatibla serier.",
+      desc: "Boosterbox / Wield pack–compatible series.",
       id: "pack",
     },
     {
       title: "Reward Token (ERC20)",
-      desc: "XP / points / bonus-token till dina collectors.",
+      desc: "XP / points / bonus tokens for your collectors.",
       id: "token",
     },
     {
       title: "Lootbox / Airdrop ERC1155",
-      desc: "Batchar, mystery loot & event-drops.",
+      desc: "Batches, mystery loot and event drops.",
       id: "loot",
     },
     {
       title: "Utility / Access NFT",
-      desc: "Pass till miniappar, Discord eller specialdrops.",
+      desc: "Passes for miniapps, Discord or special drops.",
       id: "utility",
     },
   ];
@@ -355,7 +417,7 @@ function renderDeploy() {
     btn.addEventListener("click", () => {
       const id = btn.dataset.deploy;
       alert(
-        `Deploy-mode "${id}" är UI-mock just nu.\n\nNär Hardhat-scriptet är klart kopplar vi detta till /scripts/deploy*.ts`
+        `Deploy mode "${id}" is a UI mock right now.\n\nOnce the Hardhat scripts are locked in, this connects to /scripts/deploy*.ts`
       );
     });
   });
@@ -370,7 +432,7 @@ function initLuckMeter() {
   function update() {
     const value = Math.floor(30 + Math.random() * 60); // 30–90%
     fill.style.width = value + "%";
-    label.textContent = `Luck (mock): ${value}% · ändras live när du öppnar packs sen.`;
+    label.textContent = `Luck (mock): ${value}% · will move live once you start opening packs.`;
   }
 
   update();
@@ -398,7 +460,7 @@ function initPackMap() {
       { x: 80, y: 120, r: 26, color: "#3dffb8", label: "ND" },
       { x: 200, y: 80, r: 22, color: "#ff1744", label: "PV" },
       { x: 300, y: 150, r: 18, color: "#ffeb3b", label: "CF" },
-      { x: 180, y: 200, r: 20, color: "#7c4dff", label: "MY" },
+      { x: 180, y: 200, r: 20, color: "#7c4dff", label: "MG" },
     ];
 
     ctx.strokeStyle = "rgba(255,255,255,0.18)";
@@ -461,7 +523,7 @@ function initChat() {
     }
   });
 
-  addMessage("system", "Wallet-to-wallet chat kommer här – mockade meddelanden just nu.");
+  addMessage("system", "Wallet-to-wallet chat lives here – mocked messages for now.");
 }
 
 // ----- Wallet, chain & theme -----
@@ -506,7 +568,7 @@ function initWalletButtons() {
 
   async function connectReal() {
     if (!window.ethereum) {
-      alert("Install a wallet (MetaMask, Base, Rainbow…) eller öppna i web3-browser.");
+      alert("Install a wallet (MetaMask, Base, Rainbow…) or open in a web3 browser.");
       return;
     }
     try {
@@ -517,7 +579,8 @@ function initWalletButtons() {
       state.walletFull = addr;
       state.wallet = shorten(addr);
       updateWalletUI();
-      $("#status-sync").textContent = "synced (wallet)";
+      const sync = $("#status-sync");
+      if (sync) sync.textContent = "synced (wallet)";
       await detectChain();
     } catch (e) {
       console.error(e);
@@ -558,7 +621,6 @@ function initWalletButtons() {
     });
 
     window.ethereum.on("chainChanged", () => {
-      // enklast: reload sidan
       window.location.reload();
     });
   }
@@ -572,7 +634,7 @@ function initTheme() {
     p.addEventListener("click", () => {
       const theme = p.dataset.theme;
       if (theme !== "dark") {
-        alert("Endast dark theme är aktiverat just nu (light blir editor-läge senare).");
+        alert("Only dark theme is active right now (light becomes editor mode later).");
         return;
       }
       previews.forEach((x) => x.classList.remove("active"));
@@ -632,13 +694,15 @@ function initFilters() {
 // ----- Creator Forge buttons -----
 function initCreatorForge() {
   $("#btn-upload-mock")?.addEventListener("click", () => {
-    alert("Mock: 42 images ‘uploaded’ till Creator Forge.");
-    $("#forge-rarity-dist").textContent = "Common 15 · Rare 14 · Epic 6 · Legendary 6 · Mythic 1";
+    alert("Mock: 42 images ‘uploaded’ into Creator Forge.");
+    $("#forge-rarity-dist").textContent =
+      "Common 15 · Rare 14 · Epic 6 · Legendary 6 · Mythic 1";
   });
 
   $("#btn-generate-rarity")?.addEventListener("click", () => {
     alert("Mock: Rarity distribution calculated.");
-    $("#forge-rarity-dist").textContent = "Common 60% · Rare 25% · Epic 10% · Legendary 4% · Mythic 1%";
+    $("#forge-rarity-dist").textContent =
+      "Common 60% · Rare 25% · Epic 10% · Legendary 4% · Mythic 1%";
   });
 
   $("#btn-generate-foil")?.addEventListener("click", () => {
