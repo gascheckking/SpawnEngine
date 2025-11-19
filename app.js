@@ -1,34 +1,102 @@
-import { getUnifiedActivity } from "./services/activity.js";
-
-async function loadUnifiedFeed() {
-  const wallet = "0x596a...08ff";  // senare din signer/wallet
-  const contracts = [];            // här stoppar vi in TokenPackSeries
-
-  const data = await getUnifiedActivity(wallet, contracts);
-  console.log("Unified activity:", data);
-
-  // TODO: render feed in your UI
-}
 // Simple global state
 const state = {
-  wallet: null,
-  walletFull: null,
+  wallet: null,      // shortened display
+  walletFull: null,  // full address (for real onchain queries later)
   theme: "dark",
   verified: {
     x: false,
     farcaster: false,
     base: false,
   },
-  activeSeries: null, // TokenPackSeries address (frontend only)
 };
 
 // Helpers
 const $ = (q) => document.querySelector(q);
 const $$ = (q) => Array.from(document.querySelectorAll(q));
-const shorten = (addr) =>
-  addr && addr.length > 10 ? addr.slice(0, 6) + "…" + addr.slice(-4) : addr || "";
 
-// ----- Tabs -----
+/* --------------------------------------------------
+   Unified activity (mock for now)
+   -------------------------------------------------- */
+
+async function getUnifiedActivity(wallet, contracts) {
+  // contracts = array of TokenPackSeries addresses later
+  // For now: mocked data merged from “sources”
+  const now = new Date().toISOString().slice(11, 19);
+
+  const events = [
+    {
+      source: "Base · TokenPackSeries",
+      text: "Opened Tiny Legends 2 → Mythic hit (x200) on Base",
+      time: now,
+    },
+    {
+      source: "Vibe.market",
+      text: "Sold 3× Foil Realms boosterpacks via Wield pool",
+      time: "5 min ago",
+    },
+    {
+      source: "Zora",
+      text: "Minted Rodeo drop linked to PackMesh contract",
+      time: "18 min ago",
+    },
+    {
+      source: "Farcaster",
+      text: "Cast tipped 12× for sharing a PackMesh pull clip",
+      time: "32 min ago",
+    },
+    {
+      source: "The Base App",
+      text: "Bridge in +0.42 ETH to fuel pack openings",
+      time: "1 h ago",
+    },
+    {
+      source: "Rodeo.club",
+      text: "High-score run with Tiny Legends 2 cards",
+      time: "2 h ago",
+    },
+  ];
+
+  return {
+    wallet,
+    contracts,
+    events,
+  };
+}
+
+async function loadUnifiedFeed() {
+  if (!state.walletFull) return;
+
+  const contracts = []; // later: array of TokenPackSeries contract addresses
+
+  try {
+    const data = await getUnifiedActivity(state.walletFull, contracts);
+    console.log("Unified activity:", data);
+
+    const list = $("#unified-feed");
+    if (!list) return;
+
+    list.innerHTML = data.events
+      .map(
+        (e) => `
+        <div class="activity-item">
+          <div class="activity-main">
+            <div class="activity-wallet">${e.source}</div>
+            <div class="activity-pack">${e.text}</div>
+          </div>
+          <div class="activity-meta">${e.time}</div>
+        </div>
+      `
+      )
+      .join("");
+  } catch (err) {
+    console.error("Unified feed error", err);
+  }
+}
+
+/* --------------------------------------------------
+   Tabs
+   -------------------------------------------------- */
+
 function initTabs() {
   const tabs = $$(".tab-button");
   const views = $$(".view");
@@ -49,107 +117,75 @@ function initTabs() {
   if (first) first.click();
 }
 
-// ----- Ticker -----
+/* --------------------------------------------------
+   Ticker
+   -------------------------------------------------- */
+
 function initTicker() {
   const el = $("#ticker-text");
   if (!el) return;
 
   const messages = [
-    "PackForge Hub online • monitoring Base pulls…",
-    "Mock series: Neon Draft · Prism Vault · Chaos Forge · Mythgrid",
-    "Luckiest pull (mock): Mythic Foil at $0.12 → floor $24.20",
-    "Unluckiest run: 0xdead…beef • 0 / 400 legends pulled",
+    "PackMesh online · watching Base pull activity…",
+    "Tiny Legends 2 · Foil Realms · Mad Myth · Aura Maxxed",
+    "Luckiest pull: Mythic Foil at $0.12 → floor $24.20",
+    "Unlucky survivor: 0xdead…beef · 0 / 400 legends pulled",
   ];
 
   el.textContent = messages.join("   •   ");
 }
 
-// ----- Demo data -----
-// Trading-side demo packs (series-level)
+/* --------------------------------------------------
+   Dummy data
+   -------------------------------------------------- */
+
 const demoPacks = [
   {
-    name: "Neon Draft",
+    name: "Tiny Legends 2",
     creator: "spawnizz",
     price: "$0.24",
-    supply: "42 cards",
+    supply: "42 designs",
     tags: ["verified", "bounty", "new"],
   },
   {
-    name: "Prism Vault",
+    name: "Foil Realms",
     creator: "spawnizz",
     price: "$0.28",
-    supply: "36 cards",
+    supply: "36 designs",
     tags: ["verified"],
   },
   {
-    name: "Chaos Forge",
+    name: "Aura Maxxed",
     creator: "spawnizz",
     price: "$0.46",
-    supply: "24 cards",
+    supply: "24 designs",
     tags: ["new"],
   },
   {
-    name: "Mythgrid",
+    name: "Mad Myth",
     creator: "spawnizz",
     price: "$0.22",
-    supply: "18 cards",
+    supply: "18 designs",
     tags: [],
   },
 ];
 
-// Inventory demo cards — more like real “cards” with full specs
 const demoInventory = [
-  {
-    pack: "Neon Draft",
-    cardName: "ND-017 · Prism Jester",
-    status: "for-trade",          // for-trade | sealed | grail
-    rarity: "Legendary",
-    condition: "Mint / Unplayed",
-    foil: "Toxic Foil",
-    estValue: "$68.00",
-    serial: "#17/250",
-  },
-  {
-    pack: "Prism Vault",
-    cardName: "PV-001 · Aurora Core",
-    status: "sealed",
-    rarity: "Mythic",
-    condition: "Sealed pack",
-    foil: "Base Shine",
-    estValue: "$32.00",
-    serial: "Pack #1/100",
-  },
-  {
-    pack: "Chaos Forge",
-    cardName: "CF-042 · Ember Jack",
-    status: "for-trade",
-    rarity: "Rare",
-    condition: "Lightly played",
-    foil: "Non-foil",
-    estValue: "$4.20",
-    serial: "#42/500",
-  },
-  {
-    pack: "Mythgrid",
-    cardName: "MG-007 · Grid Oracle",
-    status: "grail",
-    rarity: "Legendary",
-    condition: "Mint / Grail",
-    foil: "Neon Prism Foil",
-    estValue: "$120.00",
-    serial: "#7/50",
-  },
+  { name: "Tiny Legends 2", status: "for-trade", rarity: "legendary", value: "$68.00" },
+  { name: "Foil Realms", status: "sealed", rarity: "mythic", value: "$32.00" },
+  { name: "Mad Myth", status: "for-trade", rarity: "rare", value: "$4.20" },
+  { name: "Chaos Draft", status: "grail", rarity: "legendary", value: "$120.00" },
 ];
 
 const luckiestPulls = [
-  { wallet: "0x596a…08ff", pack: "Neon Draft", hit: "Mythic", spent: "$12", value: "$420" },
-  { wallet: "0xfeet…sn1ff", pack: "Prism Vault", hit: "Legendary Foil", spent: "$3", value: "$96" },
-  { wallet: "0x1337…c0de", pack: "Chaos Forge", hit: "Full set", spent: "$48", value: "$200" },
+  { wallet: "0x596a…08ff", pack: "Tiny Legends 2", hit: "Mythic", spent: "$12", value: "$420" },
+  { wallet: "0xfeet…sn1ff", pack: "Foil Realms", hit: "Legendary Foil", spent: "$3", value: "$96" },
+  { wallet: "0x1337…c0de", pack: "Mad Myth", hit: "Full set", spent: "$48", value: "$200" },
 ];
 
 const unluckyPulls = [
-  { wallet: "0xdead…beef", pack: "Neon Draft", hit: "0 / 400 legends", spent: "$96", value: "$40" },
-  { wallet: "0x0bad…luck", pack: "Prism Vault", hit: "Commons only", spent: "$32", value: "$10" },
+  { wallet: "0xdead…beef", pack: "Tiny Legends 2", hit: "0 / 400 legends", spent: "$96", value: "$40" },
+  { wallet: "0x0bad…luck", pack: "Foil Realms", hit: "Commons only", spent: "$32", value: "$10" },
 ];
 
 const statsWallets = [
@@ -158,12 +194,16 @@ const statsWallets = [
   { wallet: "0x1337…c0de", score: "8.7", pulls: 180, legends: 6 },
 ];
 
-// ----- Rendering helpers -----
+/* --------------------------------------------------
+   Rendering helpers
+   -------------------------------------------------- */
+
 function renderTrading() {
   const grid = $("#trading-grid");
   if (!grid) return;
 
-  const activeFilter = $("#trading-filters .filter-chip.active")?.dataset.filter || "all";
+  const activeFilter =
+    $("#trading-filters .filter-chip.active")?.dataset.filter || "all";
 
   const filtered = demoPacks.filter((p) => {
     if (activeFilter === "all") return true;
@@ -176,9 +216,12 @@ function renderTrading() {
   grid.innerHTML = filtered
     .map((p) => {
       const badges = [];
-      if (p.tags.includes("verified")) badges.push('<span class="badge badge-verified">Verified</span>');
-      if (p.tags.includes("new")) badges.push('<span class="badge badge-new">New</span>');
-      if (p.tags.includes("bounty")) badges.push('<span class="badge badge-bounty">Bounty</span>');
+      if (p.tags.includes("verified"))
+        badges.push('<span class="badge badge-verified">Verified</span>');
+      if (p.tags.includes("new"))
+        badges.push('<span class="badge badge-new">New</span>');
+      if (p.tags.includes("bounty"))
+        badges.push('<span class="badge badge-bounty">Bounty</span>');
 
       return `
         <article class="pack-card">
@@ -192,8 +235,8 @@ function renderTrading() {
           <div class="pack-badges">${badges.join("")}</div>
           <div class="card-actions">
             <button class="btn-mini">View</button>
-            <button class="btn-mini" data-action="open-mock">Open</button>
-            <button class="btn-mini" data-action="trade-mock">Trade</button>
+            <button class="btn-mini">Open</button>
+            <button class="btn-mini">Trade</button>
           </div>
         </article>
       `;
@@ -206,12 +249,12 @@ function renderTrading() {
       <div class="metric-card">
         <div class="metric-label">Live floor (mock)</div>
         <div class="metric-value">$0.22 → $0.46</div>
-        <div class="metric-sub">PackForge shell until real prices are fetched.</div>
+        <div class="metric-sub">Tiny Legends 2 & Aura Maxxed currently dominate.</div>
       </div>
       <div class="metric-card">
         <div class="metric-label">24h pulls (mock)</div>
         <div class="metric-value">3 240 packs</div>
-        <div class="metric-sub">When Wield is wired, this becomes onchain stats.</div>
+        <div class="metric-sub">PackMesh wallets account for 18%.</div>
       </div>
     `;
   }
@@ -221,7 +264,8 @@ function renderInventory() {
   const grid = $("#inventory-grid");
   if (!grid) return;
 
-  const activeFilter = $("#inventory-filters .filter-chip.active")?.dataset.filter || "all";
+  const activeFilter =
+    $("#inventory-filters .filter-chip.active")?.dataset.filter || "all";
 
   const filtered = demoInventory.filter((p) => {
     if (activeFilter === "all") return true;
@@ -232,66 +276,42 @@ function renderInventory() {
   });
 
   grid.innerHTML = filtered
-    .map((p) => {
-      const statusLabel =
-        p.status === "for-trade"
-          ? "For Trade"
-          : p.status === "sealed"
-          ? "Sealed"
-          : p.status === "grail"
-          ? "Grail"
-          : p.status;
-
-      return `
+    .map(
+      (p) => `
       <article class="pack-card">
         <div class="pack-header">
-          <div class="pack-title">${p.cardName}</div>
+          <div class="pack-title">${p.name}</div>
           <div class="pack-meta">
-            <span>${p.estValue}</span>
-            <span class="pack-creator">${statusLabel.toUpperCase()}</span>
+            <span>${p.value}</span>
+            <span class="pack-creator">${p.status.toUpperCase()}</span>
           </div>
         </div>
-
         <div class="pack-badges">
           <span class="badge badge-supply">${p.rarity}</span>
-          <span class="badge">Series: ${p.pack}</span>
-          <span class="badge">${p.condition}</span>
-          <span class="badge">${p.foil}</span>
-          <span class="badge">${p.serial}</span>
         </div>
-
         <div class="card-actions">
-          <button class="btn-mini">List on market</button>
+          <button class="btn-mini">List</button>
           <button class="btn-mini">Mark as Grail</button>
-          <button class="btn-mini">View history</button>
         </div>
       </article>
-    `;
-    })
+    `
+    )
     .join("");
 
   const metrics = $("#inventory-metrics");
   if (metrics) {
     const total = demoInventory.length;
-    const legends = demoInventory.filter((p) => p.rarity.toLowerCase() === "legendary").length;
-    const mythics = demoInventory.filter((p) => p.rarity.toLowerCase() === "mythic").length;
-    const sealed = demoInventory.filter((p) => p.status === "sealed").length;
-
+    const legends = demoInventory.filter((p) => p.rarity === "legendary").length;
     metrics.innerHTML = `
       <div class="metric-card">
-        <div class="metric-label">Total items</div>
+        <div class="metric-label">Total packs</div>
         <div class="metric-value">${total}</div>
-        <div class="metric-sub">Cards and packs tracked in this wallet (mock).</div>
+        <div class="metric-sub">Mock count for UI.</div>
       </div>
       <div class="metric-card">
-        <div class="metric-label">Legendaries / Mythics</div>
-        <div class="metric-value">${legends} L · ${mythics} M</div>
-        <div class="metric-sub">Perfect flex number for screenshots.</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Sealed pieces</div>
-        <div class="metric-value">${sealed}</div>
-        <div class="metric-sub">Potential future pulls.</div>
+        <div class="metric-label">Legendaries</div>
+        <div class="metric-value">${legends}</div>
+        <div class="metric-sub">Foils show up once we connect real data.</div>
       </div>
     `;
   }
@@ -327,14 +347,14 @@ function renderStats() {
   if (metrics) {
     metrics.innerHTML = `
       <div class="metric-card">
-        <div class="metric-label">PackForge XP (mock)</div>
+        <div class="metric-label">PackMesh XP (mock)</div>
         <div class="metric-value">524.6K XP</div>
-        <div class="metric-sub">Your own XP engine, separate from Vibe.</div>
+        <div class="metric-sub">Inspired by Vibe, but your own XP system.</div>
       </div>
       <div class="metric-card">
         <div class="metric-label">Daily pulls (mock)</div>
         <div class="metric-value">1 120</div>
-        <div class="metric-sub">Becomes live once contracts + indexer are wired.</div>
+        <div class="metric-sub">Will become live once we connect APIs.</div>
       </div>
     `;
   }
@@ -357,7 +377,9 @@ function renderVerified() {
   if (!grid) return;
 
   const statusChip = (ok) =>
-    ok ? '<span class="badge badge-verified">Linked</span>' : '<span class="badge">Not linked</span>';
+    ok
+      ? '<span class="badge badge-verified">Linked</span>'
+      : '<span class="badge">Not linked</span>';
 
   grid.innerHTML = `
     <div class="metric-card">
@@ -385,7 +407,7 @@ function renderDeploy() {
   const cards = [
     {
       title: "Vibe-style Pack NFTs",
-      desc: "Boosterbox / Wield pack–compatible series.",
+      desc: "Boosterbox / Wield-pack compatible series.",
       id: "pack",
     },
     {
@@ -395,7 +417,7 @@ function renderDeploy() {
     },
     {
       title: "Lootbox / Airdrop ERC1155",
-      desc: "Batches, mystery loot and event drops.",
+      desc: "Batch drops, mystery loot & event rewards.",
       id: "loot",
     },
     {
@@ -428,13 +450,16 @@ function renderDeploy() {
     btn.addEventListener("click", () => {
       const id = btn.dataset.deploy;
       alert(
-        `Deploy mode "${id}" is a UI mock right now.\n\nOnce the Hardhat scripts are locked in, this connects to /scripts/deploy*.ts`
+        `Deploy mode "${id}" is UI mock for now.\n\nOnce the Hardhat scripts are wired we trigger /scripts/deploy*.ts from here.`
       );
     });
   });
 }
 
-// ----- Luck meter -----
+/* --------------------------------------------------
+   Luck meter
+   -------------------------------------------------- */
+
 function initLuckMeter() {
   const fill = $("#luck-fill");
   const label = $("#luck-label");
@@ -443,14 +468,17 @@ function initLuckMeter() {
   function update() {
     const value = Math.floor(30 + Math.random() * 60); // 30–90%
     fill.style.width = value + "%";
-    label.textContent = `Luck (mock): ${value}% · will move live once you start opening packs.`;
+    label.textContent = `Luck (mock): ${value}% · will move live when you open packs.`;
   }
 
   update();
   setInterval(update, 3500);
 }
 
-// ----- Pack map (canvas) -----
+/* --------------------------------------------------
+   Pack map (canvas)
+   -------------------------------------------------- */
+
 function initPackMap() {
   const canvas = document.getElementById("pack-map-canvas");
   if (!canvas) return;
@@ -468,10 +496,10 @@ function initPackMap() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const nodes = [
-      { x: 80, y: 120, r: 26, color: "#3dffb8", label: "ND" },
-      { x: 200, y: 80, r: 22, color: "#ff1744", label: "PV" },
-      { x: 300, y: 150, r: 18, color: "#ffeb3b", label: "CF" },
-      { x: 180, y: 200, r: 20, color: "#7c4dff", label: "MG" },
+      { x: 80, y: 120, r: 26, color: "#3dffb8", label: "TL2" },
+      { x: 200, y: 80, r: 22, color: "#ff1744", label: "Foil" },
+      { x: 300, y: 150, r: 18, color: "#ffeb3b", label: "Aura" },
+      { x: 180, y: 200, r: 20, color: "#7c4dff", label: "Myth" },
     ];
 
     ctx.strokeStyle = "rgba(255,255,255,0.18)";
@@ -485,7 +513,14 @@ function initPackMap() {
     ctx.stroke();
 
     nodes.forEach((n) => {
-      const gradient = ctx.createRadialGradient(n.x - 4, n.y - 6, 4, n.x, n.y, n.r);
+      const gradient = ctx.createRadialGradient(
+        n.x - 4,
+        n.y - 6,
+        4,
+        n.x,
+        n.y,
+        n.r
+      );
       gradient.addColorStop(0, "#ffffff");
       gradient.addColorStop(0.4, n.color);
       gradient.addColorStop(1, "rgba(0,0,0,0.9)");
@@ -505,7 +540,10 @@ function initPackMap() {
   window.addEventListener("resize", resize);
 }
 
-// ----- Chat -----
+/* --------------------------------------------------
+   Chat
+   -------------------------------------------------- */
+
 function initChat() {
   const box = $("#chat-messages");
   const input = $("#chat-input");
@@ -523,7 +561,7 @@ function initChat() {
   send.addEventListener("click", () => {
     const v = input.value.trim();
     if (!v) return;
-    addMessage(state.walletFull ? shorten(state.walletFull) : "you · 0x…", v);
+    addMessage(state.wallet || "you · 0x…", v);
     input.value = "";
   });
 
@@ -534,42 +572,24 @@ function initChat() {
     }
   });
 
-  addMessage("system", "Wallet-to-wallet chat lives here – mocked messages for now.");
+  addMessage(
+    "system",
+    "Wallet-to-wallet chat will live here — currently mocked messages."
+  );
 }
 
-// ----- Wallet, chain & theme -----
+/* --------------------------------------------------
+   Wallet & theme
+   -------------------------------------------------- */
+
 function updateWalletUI() {
   const statusWallet = $("#status-wallet");
   const settingsWallet = $("#settings-wallet");
   if (statusWallet) statusWallet.textContent = state.wallet || "Not connected";
   if (settingsWallet)
-    settingsWallet.textContent = state.walletFull
-      ? `Connected: ${state.walletFull}`
+    settingsWallet.textContent = state.wallet
+      ? `Connected: ${state.wallet}`
       : "Not connected.";
-}
-
-async function detectChain() {
-  const pill = $("#network-pill");
-  const chainSpan = $("#status-chain");
-  if (!window.ethereum) {
-    if (pill) pill.textContent = "No wallet detected";
-    if (chainSpan) chainSpan.textContent = "–";
-    return;
-  }
-
-  try {
-    const chainIdHex = await window.ethereum.request({ method: "eth_chainId" });
-    const chainId = parseInt(chainIdHex, 16);
-    let label = `Chain ${chainId}`;
-    if (chainId === 8453) label = "Base Mainnet · live mode";
-    if (chainId === 84532) label = "Base Sepolia · test mode";
-
-    if (pill) pill.textContent = label;
-    if (chainSpan) chainSpan.textContent = label;
-  } catch (e) {
-    if (pill) pill.textContent = "Unknown chain";
-    if (chainSpan) chainSpan.textContent = "Unknown";
-  }
 }
 
 function initWalletButtons() {
@@ -577,64 +597,37 @@ function initWalletButtons() {
   const setConnect = $("#btn-settings-connect");
   const setDisconnect = $("#btn-settings-disconnect");
 
-  async function connectReal() {
-    if (!window.ethereum) {
-      alert("Install a wallet (MetaMask, Base, Rainbow…) or open in a web3 browser.");
-      return;
-    }
-    try {
-      const accounts = await window.ethereum.request({
-        method: "eth_requestAccounts",
-      });
-      const addr = accounts[0];
-      state.walletFull = addr;
-      state.wallet = shorten(addr);
-      updateWalletUI();
-      const sync = $("#status-sync");
-      if (sync) sync.textContent = "synced (wallet)";
-      await detectChain();
-    } catch (e) {
-      console.error(e);
-    }
+  function connect() {
+    // Mock full address; later replace with real signer.getAddress()
+    state.walletFull = "0x596a00000000000000000000000000000008ff";
+    state.wallet =
+      state.walletFull.slice(0, 6) + "…" + state.walletFull.slice(-4);
+    updateWalletUI();
+    $("#status-sync").textContent = "synced (mock)";
+    loadUnifiedFeed();
   }
 
   function disconnect() {
     state.wallet = null;
     state.walletFull = null;
     updateWalletUI();
-    const sync = $("#status-sync");
-    if (sync) sync.textContent = "waiting…";
+    $("#status-sync").textContent = "waiting…";
+    const feed = $("#unified-feed");
+    if (feed) feed.innerHTML = "";
   }
 
   [mainBtn, setConnect].forEach((btn) => {
     if (!btn) return;
     btn.addEventListener("click", () => {
-      if (state.walletFull) {
-        alert("Wallet already connected.");
+      if (state.wallet) {
+        alert("Wallet already mocked as connected.");
       } else {
-        connectReal();
+        connect();
       }
     });
   });
 
   if (setDisconnect) setDisconnect.addEventListener("click", disconnect);
-
-  if (window.ethereum) {
-    window.ethereum.on("accountsChanged", (accounts) => {
-      if (!accounts.length) {
-        state.wallet = null;
-        state.walletFull = null;
-      } else {
-        state.walletFull = accounts[0];
-        state.wallet = shorten(accounts[0]);
-      }
-      updateWalletUI();
-    });
-
-    window.ethereum.on("chainChanged", () => {
-      window.location.reload();
-    });
-  }
 }
 
 function initTheme() {
@@ -645,7 +638,9 @@ function initTheme() {
     p.addEventListener("click", () => {
       const theme = p.dataset.theme;
       if (theme !== "dark") {
-        alert("Only dark theme is active right now (light becomes editor mode later).");
+        alert(
+          "Only dark theme is active right now. Light will become an editor mode later."
+        );
         return;
       }
       previews.forEach((x) => x.classList.remove("active"));
@@ -657,7 +652,10 @@ function initTheme() {
   });
 }
 
-// ----- Verified buttons -----
+/* --------------------------------------------------
+   Verified buttons
+   -------------------------------------------------- */
+
 function initVerifiedButtons() {
   const btnX = $("#btn-verify-x");
   const btnFc = $("#btn-verify-fc");
@@ -683,12 +681,17 @@ function initVerifiedButtons() {
     });
 }
 
-// ----- Filters -----
+/* --------------------------------------------------
+   Filters
+   -------------------------------------------------- */
+
 function initFilters() {
   $("#trading-filters")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".filter-chip");
     if (!btn) return;
-    $$("#trading-filters .filter-chip").forEach((b) => b.classList.remove("active"));
+    $$("#trading-filters .filter-chip").forEach((b) =>
+      b.classList.remove("active")
+    );
     btn.classList.add("active");
     renderTrading();
   });
@@ -696,13 +699,18 @@ function initFilters() {
   $("#inventory-filters")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".filter-chip");
     if (!btn) return;
-    $$("#inventory-filters .filter-chip").forEach((b) => b.classList.remove("active"));
+    $$("#inventory-filters .filter-chip").forEach((b) =>
+      b.classList.remove("active")
+    );
     btn.classList.add("active");
     renderInventory();
   });
 }
 
-// ----- Creator Forge buttons -----
+/* --------------------------------------------------
+   Creator Forge buttons
+   -------------------------------------------------- */
+
 function initCreatorForge() {
   $("#btn-upload-mock")?.addEventListener("click", () => {
     alert("Mock: 42 images ‘uploaded’ into Creator Forge.");
@@ -717,35 +725,16 @@ function initCreatorForge() {
   });
 
   $("#btn-generate-foil")?.addEventListener("click", () => {
-    alert("Mock: Foil previews generated (Base Shine · Toxic · Neon Prism).");
+    alert(
+      "Mock: Foil previews generated (Base Shine · Toxic · Neon Prism)."
+    );
   });
 }
 
-// ----- Active series (frontend) -----
-function initActiveSeries() {
-  const input = $("#series-address-input");
-  const btn = $("#btn-save-series");
-  const current = $("#series-address-current");
-  const stored = window.localStorage.getItem("packforge_active_series");
+/* --------------------------------------------------
+   Init
+   -------------------------------------------------- */
 
-  if (stored) {
-    state.activeSeries = stored;
-    if (current) current.textContent = stored;
-  }
-
-  if (!btn || !input) return;
-
-  btn.addEventListener("click", () => {
-    const v = input.value.trim();
-    if (!v) return alert("Paste a TokenPackSeries address first.");
-    state.activeSeries = v;
-    window.localStorage.setItem("packforge_active_series", v);
-    if (current) current.textContent = v;
-    alert("Active series saved (frontend only).");
-  });
-}
-
-// ----- Init -----
 document.addEventListener("DOMContentLoaded", () => {
   initTabs();
   initTicker();
@@ -763,7 +752,5 @@ document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   initVerifiedButtons();
   initCreatorForge();
-  initActiveSeries();
   updateWalletUI();
-  detectChain();
 });
