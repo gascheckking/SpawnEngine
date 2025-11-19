@@ -1,17 +1,21 @@
-// Enkel state
+// Enkel global state
 const state = {
   wallet: null,
+  walletFull: null,
   theme: "dark",
   verified: {
     x: false,
     farcaster: false,
     base: false,
   },
+  activeSeries: null, // TokenPackSeries-adress (frontend-sparad)
 };
 
-// Hjälp-funktion
+// Hjälp-funktioner
 const $ = (q) => document.querySelector(q);
 const $$ = (q) => Array.from(document.querySelectorAll(q));
+const shorten = (addr) =>
+  addr && addr.length > 10 ? addr.slice(0, 6) + "…" + addr.slice(-4) : addr || "";
 
 // ----- Tabs -----
 function initTabs() {
@@ -30,7 +34,6 @@ function initTabs() {
     });
   });
 
-  // Default: trading
   const first = $(".tab-button");
   if (first) first.click();
 }
@@ -41,8 +44,8 @@ function initTicker() {
   if (!el) return;
 
   const messages = [
-    "SpawnEngine online • monitoring Base activity…",
-    "Tiny Legends 2 · Foil Realms · Mad Myth · Aura Maxxed",
+    "PackForge Hub online • monitoring Base pulls…",
+    "Mock series: Neon Draft · Prism Packs · Chaos Vault",
     "Luckiest pull: Mythic Foil at $0.12 → floor $24.20",
     "Unlucky survivor: 0xdead…beef • 0 / 400 legends pulled",
   ];
@@ -53,28 +56,28 @@ function initTicker() {
 // ----- Dummy data -----
 const demoPacks = [
   {
-    name: "Tiny Legends 2",
+    name: "Neon Draft",
     creator: "spawnizz",
     price: "$0.24",
     supply: "42 designs",
     tags: ["verified", "bounty", "new"],
   },
   {
-    name: "Foil Realms",
+    name: "Prism Vault",
     creator: "spawnizz",
     price: "$0.28",
     supply: "36 designs",
     tags: ["verified"],
   },
   {
-    name: "Aura Maxxed",
+    name: "Chaos Forge",
     creator: "spawnizz",
     price: "$0.46",
     supply: "24 designs",
     tags: ["new"],
   },
   {
-    name: "Mad Myth",
+    name: "Mythgrid",
     creator: "spawnizz",
     price: "$0.22",
     supply: "18 designs",
@@ -83,21 +86,21 @@ const demoPacks = [
 ];
 
 const demoInventory = [
-  { name: "Tiny Legends 2", status: "for-trade", rarity: "legendary", value: "$68.00" },
-  { name: "Foil Realms", status: "sealed", rarity: "mythic", value: "$32.00" },
-  { name: "Mad Myth", status: "for-trade", rarity: "rare", value: "$4.20" },
-  { name: "Chaos Draft", status: "grail", rarity: "legendary", value: "$120.00" },
+  { name: "Neon Draft", status: "for-trade", rarity: "legendary", value: "$68.00" },
+  { name: "Prism Vault", status: "sealed", rarity: "mythic", value: "$32.00" },
+  { name: "Chaos Forge", status: "for-trade", rarity: "rare", value: "$4.20" },
+  { name: "Mythgrid", status: "grail", rarity: "legendary", value: "$120.00" },
 ];
 
 const luckiestPulls = [
-  { wallet: "0x596a…08ff", pack: "Tiny Legends 2", hit: "Mythic", spent: "$12", value: "$420" },
-  { wallet: "0xfeet…sn1ff", pack: "Foil Realms", hit: "Legendary Foil", spent: "$3", value: "$96" },
-  { wallet: "0x1337…c0de", pack: "Mad Myth", hit: "Full set", spent: "$48", value: "$200" },
+  { wallet: "0x596a…08ff", pack: "Neon Draft", hit: "Mythic", spent: "$12", value: "$420" },
+  { wallet: "0xfeet…sn1ff", pack: "Prism Vault", hit: "Legendary Foil", spent: "$3", value: "$96" },
+  { wallet: "0x1337…c0de", pack: "Chaos Forge", hit: "Full set", spent: "$48", value: "$200" },
 ];
 
 const unluckyPulls = [
-  { wallet: "0xdead…beef", pack: "Tiny Legends 2", hit: "0 / 400 legends", spent: "$96", value: "$40" },
-  { wallet: "0x0bad…luck", pack: "Foil Realms", hit: "Commons only", spent: "$32", value: "$10" },
+  { wallet: "0xdead…beef", pack: "Neon Draft", hit: "0 / 400 legends", spent: "$96", value: "$40" },
+  { wallet: "0x0bad…luck", pack: "Prism Vault", hit: "Commons only", spent: "$32", value: "$10" },
 ];
 
 const statsWallets = [
@@ -140,8 +143,8 @@ function renderTrading() {
           <div class="pack-badges">${badges.join("")}</div>
           <div class="card-actions">
             <button class="btn-mini">View</button>
-            <button class="btn-mini">Open</button>
-            <button class="btn-mini">Trade</button>
+            <button class="btn-mini" data-action="open-mock">Open</button>
+            <button class="btn-mini" data-action="trade-mock">Trade</button>
           </div>
         </article>
       `;
@@ -154,12 +157,12 @@ function renderTrading() {
       <div class="metric-card">
         <div class="metric-label">Live floor (mock)</div>
         <div class="metric-value">$0.22 → $0.46</div>
-        <div class="metric-sub">Tiny Legends 2 & Aura Maxxed dominerar.</div>
+        <div class="metric-sub">PackForge-skal tills riktiga priser hämtas.</div>
       </div>
       <div class="metric-card">
         <div class="metric-label">24h pulls (mock)</div>
         <div class="metric-value">3 240 packs</div>
-        <div class="metric-sub">SpawnEngine wallets står för 18%.</div>
+        <div class="metric-sub">När vi kopplar Wield blir detta onchain stats.</div>
       </div>
     `;
   }
@@ -251,14 +254,14 @@ function renderStats() {
   if (metrics) {
     metrics.innerHTML = `
       <div class="metric-card">
-        <div class="metric-label">SpawnEngine XP (mock)</div>
+        <div class="metric-label">PackForge XP (mock)</div>
         <div class="metric-value">524.6K XP</div>
-        <div class="metric-sub">Direkt inspirerat från Vibe men ditt system.</div>
+        <div class="metric-sub">Din egen XP-motor, separat från Vibe.</div>
       </div>
       <div class="metric-card">
         <div class="metric-label">Daily pulls (mock)</div>
         <div class="metric-value">1 120</div>
-        <div class="metric-sub">När vi kopplar API blir detta live.</div>
+        <div class="metric-sub">Live när vi kopplar kontrakt + indexer.</div>
       </div>
     `;
   }
@@ -392,10 +395,10 @@ function initPackMap() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const nodes = [
-      { x: 80, y: 120, r: 26, color: "#3dffb8", label: "TL2" },
-      { x: 200, y: 80, r: 22, color: "#ff1744", label: "Foil" },
-      { x: 300, y: 150, r: 18, color: "#ffeb3b", label: "Aura" },
-      { x: 180, y: 200, r: 20, color: "#7c4dff", label: "Myth" },
+      { x: 80, y: 120, r: 26, color: "#3dffb8", label: "ND" },
+      { x: 200, y: 80, r: 22, color: "#ff1744", label: "PV" },
+      { x: 300, y: 150, r: 18, color: "#ffeb3b", label: "CF" },
+      { x: 180, y: 200, r: 20, color: "#7c4dff", label: "MY" },
     ];
 
     ctx.strokeStyle = "rgba(255,255,255,0.18)";
@@ -447,7 +450,7 @@ function initChat() {
   send.addEventListener("click", () => {
     const v = input.value.trim();
     if (!v) return;
-    addMessage(state.wallet || "you · 0x…", v);
+    addMessage(state.walletFull ? shorten(state.walletFull) : "you · 0x…", v);
     input.value = "";
   });
 
@@ -461,13 +464,39 @@ function initChat() {
   addMessage("system", "Wallet-to-wallet chat kommer här – mockade meddelanden just nu.");
 }
 
-// ----- Wallet & theme -----
+// ----- Wallet, chain & theme -----
 function updateWalletUI() {
   const statusWallet = $("#status-wallet");
   const settingsWallet = $("#settings-wallet");
   if (statusWallet) statusWallet.textContent = state.wallet || "Not connected";
   if (settingsWallet)
-    settingsWallet.textContent = state.wallet ? `Connected: ${state.wallet}` : "Not connected.";
+    settingsWallet.textContent = state.walletFull
+      ? `Connected: ${state.walletFull}`
+      : "Not connected.";
+}
+
+async function detectChain() {
+  const pill = $("#network-pill");
+  const chainSpan = $("#status-chain");
+  if (!window.ethereum) {
+    if (pill) pill.textContent = "No wallet detected";
+    if (chainSpan) chainSpan.textContent = "–";
+    return;
+  }
+
+  try {
+    const chainIdHex = await window.ethereum.request({ method: "eth_chainId" });
+    const chainId = parseInt(chainIdHex, 16);
+    let label = `Chain ${chainId}`;
+    if (chainId === 8453) label = "Base Mainnet · live mode";
+    if (chainId === 84532) label = "Base Sepolia · test mode";
+
+    if (pill) pill.textContent = label;
+    if (chainSpan) chainSpan.textContent = label;
+  } catch (e) {
+    if (pill) pill.textContent = "Unknown chain";
+    if (chainSpan) chainSpan.textContent = "Unknown";
+  }
 }
 
 function initWalletButtons() {
@@ -475,32 +504,64 @@ function initWalletButtons() {
   const setConnect = $("#btn-settings-connect");
   const setDisconnect = $("#btn-settings-disconnect");
 
-  function connect() {
-    // Mockad address
-    state.wallet = "0x596a…08ff";
-    updateWalletUI();
-    $("#status-sync").textContent = "synced (mock)";
+  async function connectReal() {
+    if (!window.ethereum) {
+      alert("Install a wallet (MetaMask, Base, Rainbow…) eller öppna i web3-browser.");
+      return;
+    }
+    try {
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      const addr = accounts[0];
+      state.walletFull = addr;
+      state.wallet = shorten(addr);
+      updateWalletUI();
+      $("#status-sync").textContent = "synced (wallet)";
+      await detectChain();
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   function disconnect() {
     state.wallet = null;
+    state.walletFull = null;
     updateWalletUI();
-    $("#status-sync").textContent = "waiting…";
+    const sync = $("#status-sync");
+    if (sync) sync.textContent = "waiting…";
   }
 
   [mainBtn, setConnect].forEach((btn) => {
     if (!btn) return;
     btn.addEventListener("click", () => {
-      if (state.wallet) {
-        // redan connected
-        alert("Wallet already mocked as connected.");
+      if (state.walletFull) {
+        alert("Wallet already connected.");
       } else {
-        connect();
+        connectReal();
       }
     });
   });
 
   if (setDisconnect) setDisconnect.addEventListener("click", disconnect);
+
+  if (window.ethereum) {
+    window.ethereum.on("accountsChanged", (accounts) => {
+      if (!accounts.length) {
+        state.wallet = null;
+        state.walletFull = null;
+      } else {
+        state.walletFull = accounts[0];
+        state.wallet = shorten(accounts[0]);
+      }
+      updateWalletUI();
+    });
+
+    window.ethereum.on("chainChanged", () => {
+      // enklast: reload sidan
+      window.location.reload();
+    });
+  }
 }
 
 function initTheme() {
@@ -585,6 +646,30 @@ function initCreatorForge() {
   });
 }
 
+// ----- Active series (frontend) -----
+function initActiveSeries() {
+  const input = $("#series-address-input");
+  const btn = $("#btn-save-series");
+  const current = $("#series-address-current");
+  const stored = window.localStorage.getItem("packforge_active_series");
+
+  if (stored) {
+    state.activeSeries = stored;
+    if (current) current.textContent = stored;
+  }
+
+  if (!btn || !input) return;
+
+  btn.addEventListener("click", () => {
+    const v = input.value.trim();
+    if (!v) return alert("Paste a TokenPackSeries address first.");
+    state.activeSeries = v;
+    window.localStorage.setItem("packforge_active_series", v);
+    if (current) current.textContent = v;
+    alert("Active series saved (frontend only).");
+  });
+}
+
 // ----- Init -----
 document.addEventListener("DOMContentLoaded", () => {
   initTabs();
@@ -603,5 +688,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initTheme();
   initVerifiedButtons();
   initCreatorForge();
+  initActiveSeries();
   updateWalletUI();
+  detectChain();
 });
