@@ -2,24 +2,26 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>SpawnEngine — Onchain Pack Factory</title>
+  <title>PackForge Hub — Onchain Pack Factory</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- CSS ligger i /css/style.css -->
   <link rel="stylesheet" href="/css/style.css" />
+  <!-- Ethers som UMD (globala window.ethers) -->
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.11.1/dist/ethers.umd.min.js"></script>
 </head>
 <body>
   <div class="app-shell">
     <!-- Header -->
     <header class="app-header">
       <div class="brand">
-        <div class="brand-logo">SE</div>
+        <div class="brand-logo">PF</div>
         <div class="brand-copy">
-          <h1>SpawnEngine — Onchain Swap/Trade</h1>
-          <p>Pack engine för buys, pulls & onchain collectors</p>
+          <h1>PackForge Hub — Onchain Pack Factory</h1>
+          <p>Base / Farcaster pack-trading, deploys & stats för creators</p>
         </div>
       </div>
       <div class="header-right">
-        <div class="network-pill" id="network-pill">Base · Vibechain-style packs</div>
+        <div class="network-pill" id="network-pill">Network: unknown</div>
         <button class="btn-primary" id="btn-connect">Connect Wallet</button>
       </div>
     </header>
@@ -37,7 +39,7 @@
     <!-- Status strip -->
     <div class="status-strip" id="status-strip">
       <div class="status-chip">Wallet: <span id="status-wallet">Not connected</span></div>
-      <div class="status-chip">Wield API: <span id="status-wield">Unknown</span></div>
+      <div class="status-chip">Active chain: <span id="status-chain">–</span></div>
       <div class="status-chip">Sync: <span id="status-sync">waiting…</span></div>
       <div class="status-chip">Theme: <span id="status-theme">Dark</span></div>
     </div>
@@ -62,8 +64,8 @@
       <!-- Trading -->
       <section class="view active" id="view-trading">
         <div class="view-header">
-          <h2>Pack Trading <span class="tag">Live</span></h2>
-          <p>Open, collect & trade packs via Wield-powered markets.</p>
+          <h2>Pack Trading <span class="tag">Live Shell</span></h2>
+          <p>Open, collect & trade packs — mockad data tills kontrakten kopplas in.</p>
         </div>
 
         <div class="filter-row" id="trading-filters">
@@ -85,7 +87,7 @@
       <section class="view" id="view-inventory">
         <div class="view-header">
           <h2>My Packs / For Trade</h2>
-          <p>Packs i din wallet, redo att listas eller swappas.</p>
+          <p>Packs i din wallet, redo att listas eller swappas. Just nu mock.</p>
         </div>
 
         <div class="filter-row" id="inventory-filters">
@@ -107,7 +109,7 @@
       <section class="view" id="view-creator">
         <div class="view-header">
           <h2>Creator Forge <span class="tag">Build</span></h2>
-          <p>Bygg nya serier direkt i SpawnEngine — upload, rarity, foil, deploy.</p>
+          <p>Bygg nya serier – upload, rarity, foil, deploy.</p>
         </div>
 
         <div class="panel">
@@ -115,7 +117,7 @@
           <p class="muted">Dra in dina bilder (upp till 100) eller välj lokalt.</p>
           <div class="button-row">
             <button class="btn-primary" id="btn-upload-mock">Mock upload</button>
-            <button class="btn-ghost">Use Tiny Legends template</button>
+            <button class="btn-ghost">Use pack template</button>
           </div>
         </div>
 
@@ -145,7 +147,7 @@
           <div class="metric-grid">
             <div class="metric-card">
               <div class="metric-label">Series name</div>
-              <div class="metric-value">Tiny Legends 2 · Foil Realms · SpawnEngine Packs</div>
+              <div class="metric-value">PackForge Series · Spawn Packs · whatever</div>
               <div class="metric-sub">Sätt exakt i Deploy Center.</div>
             </div>
             <div class="metric-card">
@@ -201,7 +203,7 @@
       <section class="view" id="view-verified">
         <div class="view-header">
           <h2>Warp Verified</h2>
-          <p>Trippel-verifiering via X, Farcaster & Base-aktivitet.</p>
+          <p>Trippel-verifiering via X, Farcaster & Base-aktivitet (mockad just nu).</p>
         </div>
 
         <div class="metric-grid" id="verified-grid"></div>
@@ -227,11 +229,11 @@
           <div class="bubble-column">
             <div class="wallet-bubble">
               <div class="wallet-id">0xfeet…sn1ff</div>
-              <div class="msg-text">“Just pulled a Legendary Foil Realms…”</div>
+              <div class="msg-text">“Just pulled a Legendary Foil…”</div>
             </div>
             <div class="wallet-bubble">
               <div class="wallet-id">0x1234…abcd</div>
-              <div class="msg-text">“Buying any sealed Tiny Legends under $5.”</div>
+              <div class="msg-text">“Buying any sealed packs under $5.”</div>
             </div>
           </div>
           <div class="bubble-column">
@@ -271,11 +273,15 @@
         <div class="card-grid compact" id="deploy-grid"></div>
 
         <div class="panel">
-          <h3>Next step</h3>
+          <h3>Active Series (frontend only)</h3>
           <p class="muted">
-            När Hardhat-scripten är helt spikade kopplar vi dessa knappar till riktiga deploy calls
-            (Base Sepolia / Base mainnet).
+            Spara en TokenPackSeries-adress här så UI:t vet vilken serie som är “aktiv” när vi kopplar kontrakt.
           </p>
+          <div class="button-row">
+            <input id="series-address-input" placeholder="0x…TokenPackSeries" style="flex:1; padding:8px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:#05030f; color:#f5f5ff;">
+            <button class="btn-mini" id="btn-save-series">Set Active</button>
+          </div>
+          <p class="metric-sub">Current active: <span id="series-address-current">none</span></p>
         </div>
       </section>
 
@@ -283,7 +289,7 @@
       <section class="view" id="view-settings">
         <div class="view-header">
           <h2>Settings</h2>
-          <p>Wallet, API-proxy, theme. Ingen mer låst vy här.</p>
+          <p>Wallet, theme & miniapp-läge. Den här är din “Base app”-panel.</p>
         </div>
 
         <div class="panel">
@@ -300,7 +306,7 @@
           <p class="muted">Dark mode är default. Light blir mer “editor-vy”.</p>
           <div class="theme-preview-row">
             <div class="theme-preview theme-dark active" data-theme="dark">
-              Dark · Neon Spawn
+              Dark · PackForge
             </div>
             <div class="theme-preview disabled" data-theme="light">
               Light · Creator Mode (kommer sen)
@@ -311,7 +317,7 @@
     </div>
 
     <footer class="app-footer">
-      Built with <span class="spawn-spark">SpawnEngine</span> · Onchain Pack Factory · Powered by Wield API (soon)
+      PackForge Hub · Onchain Pack Factory · Powered by SpawnEngine contracts & Wield API (soon)
     </footer>
   </div>
 
