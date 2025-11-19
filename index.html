@@ -2,26 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>PackForge Hub — Onchain Pack Factory</title>
+  <title>PackMesh — Onchain Pack Hub</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- CSS in /css/style.css -->
+  <!-- CSS lives in /css/style.css -->
   <link rel="stylesheet" href="/css/style.css" />
-  <!-- Ethers UMD (global window.ethers) -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.11.1/dist/ethers.umd.min.js"></script>
 </head>
 <body>
   <div class="app-shell">
     <!-- Header -->
     <header class="app-header">
       <div class="brand">
-        <div class="brand-logo">PF</div>
+        <div class="brand-logo">PM</div>
         <div class="brand-copy">
-          <h1>PackForge Hub — Onchain Pack Factory</h1>
-          <p>Base / Farcaster–ready pack trading, deploys & collector stats</p>
+          <h1>PackMesh — Onchain Pack Hub</h1>
+          <p>Pack engine for buys, pulls & onchain collectors</p>
         </div>
       </div>
       <div class="header-right">
-        <div class="network-pill" id="network-pill">Network: unknown</div>
+        <div class="network-pill" id="network-pill">Base · Vibechain-style packs</div>
         <button class="btn-primary" id="btn-connect">Connect Wallet</button>
       </div>
     </header>
@@ -39,7 +37,7 @@
     <!-- Status strip -->
     <div class="status-strip" id="status-strip">
       <div class="status-chip">Wallet: <span id="status-wallet">Not connected</span></div>
-      <div class="status-chip">Active chain: <span id="status-chain">–</span></div>
+      <div class="status-chip">Wield API: <span id="status-wield">Unknown</span></div>
       <div class="status-chip">Sync: <span id="status-sync">waiting…</span></div>
       <div class="status-chip">Theme: <span id="status-theme">Dark</span></div>
     </div>
@@ -47,7 +45,7 @@
     <!-- Tabs -->
     <nav class="tab-bar">
       <button class="tab-button active" data-view="view-trading">Trading</button>
-      <button class="tab-button" data-view="view-inventory">My Packs</button>
+      <button class="tab-button" data-view="view-inventory">Inventory</button>
       <button class="tab-button" data-view="view-creator">Creator Forge</button>
       <button class="tab-button" data-view="view-pulllab">Pull Lab</button>
       <button class="tab-button" data-view="view-maps">Pack Maps</button>
@@ -64,8 +62,8 @@
       <!-- Trading -->
       <section class="view active" id="view-trading">
         <div class="view-header">
-          <h2>Pack Trading <span class="tag">Live Shell</span></h2>
-          <p>Open, collect and trade packs — mocked series until contracts are wired in.</p>
+          <h2>Pack Trading <span class="tag">Live</span></h2>
+          <p>Open, collect & trade packs via Wield-powered markets.</p>
         </div>
 
         <div class="filter-row" id="trading-filters">
@@ -83,11 +81,11 @@
         </div>
       </section>
 
-      <!-- Inventory / My Packs -->
+      <!-- Inventory -->
       <section class="view" id="view-inventory">
         <div class="view-header">
-          <h2>My Packs & Cards</h2>
-          <p>Packs and pulls in your wallet – with series, rarity, condition and trade status.</p>
+          <h2>My Packs / For Trade</h2>
+          <p>Packs in your wallet, ready to list, trade or keep sealed.</p>
         </div>
 
         <div class="filter-row" id="inventory-filters">
@@ -100,7 +98,7 @@
         <div class="card-grid compact" id="inventory-grid"></div>
 
         <div class="panel">
-          <h3>Collection Summary</h3>
+          <h3>Inventory Summary</h3>
           <div class="metric-grid" id="inventory-metrics"></div>
         </div>
       </section>
@@ -109,21 +107,21 @@
       <section class="view" id="view-creator">
         <div class="view-header">
           <h2>Creator Forge <span class="tag">Build</span></h2>
-          <p>Build new series – upload, rarity, foils, deploy contracts.</p>
+          <p>Spin up new series directly in PackMesh — upload, rarity, foil, deploy.</p>
         </div>
 
         <div class="panel">
           <h3>Step 1 — Art Upload</h3>
-          <p class="muted">Drop your images (up to 100) or choose from your device.</p>
+          <p class="muted">Drop your images (up to 100) or select from device.</p>
           <div class="button-row">
             <button class="btn-primary" id="btn-upload-mock">Mock upload</button>
-            <button class="btn-ghost">Use pack template</button>
+            <button class="btn-ghost">Use Tiny Legends template</button>
           </div>
         </div>
 
         <div class="panel">
           <h3>Step 2 — Rarity & Foil Engine</h3>
-          <p class="muted">Auto-distribute Common → Mythic and attach foil layers.</p>
+          <p class="muted">Auto-distribute Common → Mythic and prepare foil layers.</p>
           <div class="metric-grid">
             <div class="metric-card">
               <div class="metric-label">Common / Rare / Epic / Legendary / Mythic</div>
@@ -133,7 +131,7 @@
             <div class="metric-card">
               <div class="metric-label">Foil styles</div>
               <div class="metric-value">Base Shine · Toxic · Neon Prism</div>
-              <div class="metric-sub">Selectable in Deploy Center later.</div>
+              <div class="metric-sub">Pick in the Deploy Center later.</div>
             </div>
           </div>
           <div class="button-row">
@@ -147,13 +145,13 @@
           <div class="metric-grid">
             <div class="metric-card">
               <div class="metric-label">Series name</div>
-              <div class="metric-value">PackForge Series · Spawn Packs · more…</div>
-              <div class="metric-sub">Set exact name in Deploy Center.</div>
+              <div class="metric-value">Tiny Legends 2 · Foil Realms · Spawn packs…</div>
+              <div class="metric-sub">Final naming in the Deploy Center.</div>
             </div>
             <div class="metric-card">
               <div class="metric-label">Chain / Markets</div>
               <div class="metric-value">Base · Vibe · Zora-ready</div>
-              <div class="metric-sub">Multi-venue from the same deployment.</div>
+              <div class="metric-sub">Multi-venue from one deploy.</div>
             </div>
           </div>
         </div>
@@ -163,12 +161,12 @@
       <section class="view" id="view-pulllab">
         <div class="view-header">
           <h2>Pull Lab <span class="tag">Luck Engine</span></h2>
-          <p>Track luckiest pulls, cursed streaks and pack entropy per wallet.</p>
+          <p>Track luckiest pulls, cursed streaks & pack entropy per wallet.</p>
         </div>
 
         <div class="panel">
           <h3>Luck Meter</h3>
-          <p class="muted">Live sim for your “pull luck” (mock until onchain data is wired).</p>
+          <p class="muted">Live sim for your “pull luck” (mock until we wire real data).</p>
           <div class="luck-meter">
             <div class="luck-fill" id="luck-fill"></div>
           </div>
@@ -195,7 +193,7 @@
 
         <canvas id="pack-map-canvas"></canvas>
         <p class="metric-sub muted">
-          Mocked bubble map – real nodes will be wired to Wield / onchain data later.
+          Mock bubble map — real nodes will connect to Wield / onchain data later.
         </p>
       </section>
 
@@ -203,7 +201,7 @@
       <section class="view" id="view-verified">
         <div class="view-header">
           <h2>Warp Verified</h2>
-          <p>Triple-verification across X, Farcaster and Base activity (mock for now).</p>
+          <p>Triple verification via X, Farcaster & Base activity.</p>
         </div>
 
         <div class="metric-grid" id="verified-grid"></div>
@@ -222,18 +220,18 @@
       <section class="view" id="view-chat">
         <div class="view-header">
           <h2>Wallet Bubbles / Chat</h2>
-          <p>Planned feature – wallet-to-wallet chat between collectors.</p>
+          <p>Planned feature — wallet-to-wallet chat between collectors.</p>
         </div>
 
         <div class="bubble-layout">
           <div class="bubble-column">
             <div class="wallet-bubble">
               <div class="wallet-id">0xfeet…sn1ff</div>
-              <div class="msg-text">“Just pulled a Legendary Foil…”</div>
+              <div class="msg-text">“Just pulled a Legendary Foil Realms…”</div>
             </div>
             <div class="wallet-bubble">
               <div class="wallet-id">0x1234…abcd</div>
-              <div class="msg-text">“Buying any sealed packs under $5.”</div>
+              <div class="msg-text">“Buying any sealed Tiny Legends under $5.”</div>
             </div>
           </div>
           <div class="bubble-column">
@@ -261,32 +259,32 @@
           <h3>Top Wallets by Pull Score</h3>
           <table class="stats-table" id="stats-top-wallets"></table>
         </div>
+
+        <div class="panel">
+          <h3>Unified Activity Feed (mock)</h3>
+          <p class="muted">
+            Merged view from Base, Vibe, Zora, Farcaster, The Base App, Rodeo, etc —
+            later driven by real onchain + API data.
+          </p>
+          <div class="activity-list" id="unified-feed"></div>
+        </div>
       </section>
 
       <!-- Deploy Center -->
       <section class="view" id="view-deploy">
         <div class="view-header">
           <h2>Deploy Center <span class="tag">Contracts</span></h2>
-          <p>Four deploy modes: vibe-style pack NFTs, reward tokens, lootboxes & utility NFTs.</p>
+          <p>Four deploy modes: Vibe-style packs, reward tokens, lootbox & utility NFTs.</p>
         </div>
 
         <div class="card-grid compact" id="deploy-grid"></div>
 
         <div class="panel">
-          <h3>Active Series (frontend only)</h3>
+          <h3>Next step</h3>
           <p class="muted">
-            Save a TokenPackSeries address here so the UI knows which series is “active”
-            when we wire contract calls.
+            When the Hardhat scripts are final we wire these buttons into real deploy
+            calls (Base Sepolia / Base mainnet).
           </p>
-          <div class="button-row">
-            <input
-              id="series-address-input"
-              placeholder="0x…TokenPackSeries"
-              style="flex:1; padding:8px; border-radius:12px; border:1px solid rgba(255,255,255,0.12); background:#05030f; color:#f5f5ff;"
-            >
-            <button class="btn-mini" id="btn-save-series">Set Active</button>
-          </div>
-          <p class="metric-sub">Current active: <span id="series-address-current">none</span></p>
         </div>
       </section>
 
@@ -294,7 +292,7 @@
       <section class="view" id="view-settings">
         <div class="view-header">
           <h2>Settings</h2>
-          <p>Wallet, theme and mini-app mode. This is your “Base app” control panel.</p>
+          <p>Wallet, API proxy, theme. This view won’t be locked down.</p>
         </div>
 
         <div class="panel">
@@ -308,13 +306,13 @@
 
         <div class="panel">
           <h3>Theme</h3>
-          <p class="muted">Dark mode is default. “Light” becomes a creator/editor view later.</p>
+          <p class="muted">Dark mode is default. Light becomes “editor mode” later.</p>
           <div class="theme-preview-row">
             <div class="theme-preview theme-dark active" data-theme="dark">
-              Dark · PackForge
+              Dark · Neon Spawn
             </div>
             <div class="theme-preview disabled" data-theme="light">
-              Light · Creator Mode (soon)
+              Light · Creator Mode (coming soon)
             </div>
           </div>
         </div>
@@ -322,7 +320,7 @@
     </div>
 
     <footer class="app-footer">
-      PackForge Hub · Onchain Pack Factory · Powered by SpawnEngine contracts & Wield API (soon)
+      Built with <span class="spawn-spark">PackMesh</span> · Onchain Pack Hub · Powered by Wield API (soon)
     </footer>
   </div>
 
