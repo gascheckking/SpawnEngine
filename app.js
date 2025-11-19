@@ -1,3 +1,14 @@
+import { getUnifiedActivity } from "./services/activity.js";
+
+async function loadUnifiedFeed() {
+  const wallet = "0x596a...08ff";  // senare din signer/wallet
+  const contracts = [];            // här stoppar vi in TokenPackSeries
+
+  const data = await getUnifiedActivity(wallet, contracts);
+  console.log("Unified activity:", data);
+
+  // TODO: render feed in your UI
+}
 // Simple global state
 const state = {
   wallet: null,
