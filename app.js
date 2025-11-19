@@ -1,7 +1,7 @@
 // Simple global state
 const state = {
-  wallet: null,      // shortened display
-  walletFull: null,  // full address (for real onchain queries later)
+  wallet: null,
+  walletFull: null,
   theme: "dark",
   verified: {
     x: false,
@@ -10,93 +10,10 @@ const state = {
   },
 };
 
-// Helpers
 const $ = (q) => document.querySelector(q);
 const $$ = (q) => Array.from(document.querySelectorAll(q));
 
-/* --------------------------------------------------
-   Unified activity (mock for now)
-   -------------------------------------------------- */
-
-async function getUnifiedActivity(wallet, contracts) {
-  // contracts = array of TokenPackSeries addresses later
-  // For now: mocked data merged from “sources”
-  const now = new Date().toISOString().slice(11, 19);
-
-  const events = [
-    {
-      source: "Base · TokenPackSeries",
-      text: "Opened Tiny Legends 2 → Mythic hit (x200) on Base",
-      time: now,
-    },
-    {
-      source: "Vibe.market",
-      text: "Sold 3× Foil Realms boosterpacks via Wield pool",
-      time: "5 min ago",
-    },
-    {
-      source: "Zora",
-      text: "Minted Rodeo drop linked to PackMesh contract",
-      time: "18 min ago",
-    },
-    {
-      source: "Farcaster",
-      text: "Cast tipped 12× for sharing a PackMesh pull clip",
-      time: "32 min ago",
-    },
-    {
-      source: "The Base App",
-      text: "Bridge in +0.42 ETH to fuel pack openings",
-      time: "1 h ago",
-    },
-    {
-      source: "Rodeo.club",
-      text: "High-score run with Tiny Legends 2 cards",
-      time: "2 h ago",
-    },
-  ];
-
-  return {
-    wallet,
-    contracts,
-    events,
-  };
-}
-
-async function loadUnifiedFeed() {
-  if (!state.walletFull) return;
-
-  const contracts = []; // later: array of TokenPackSeries contract addresses
-
-  try {
-    const data = await getUnifiedActivity(state.walletFull, contracts);
-    console.log("Unified activity:", data);
-
-    const list = $("#unified-feed");
-    if (!list) return;
-
-    list.innerHTML = data.events
-      .map(
-        (e) => `
-        <div class="activity-item">
-          <div class="activity-main">
-            <div class="activity-wallet">${e.source}</div>
-            <div class="activity-pack">${e.text}</div>
-          </div>
-          <div class="activity-meta">${e.time}</div>
-        </div>
-      `
-      )
-      .join("");
-  } catch (err) {
-    console.error("Unified feed error", err);
-  }
-}
-
-/* --------------------------------------------------
-   Tabs
-   -------------------------------------------------- */
-
+// ----- Tabs -----
 function initTabs() {
   const tabs = $$(".tab-button");
   const views = $$(".view");
@@ -109,7 +26,8 @@ function initTabs() {
       tab.classList.add("active");
 
       views.forEach((v) => v.classList.remove("active"));
-      $("#" + viewId).classList.add("active");
+      const target = $("#" + viewId);
+      if (target) target.classList.add("active");
     });
   });
 
@@ -117,28 +35,44 @@ function initTabs() {
   if (first) first.click();
 }
 
-/* --------------------------------------------------
-   Ticker
-   -------------------------------------------------- */
+// ----- Rullgardiner / sections -----
+function initSections() {
+  $$(".section").forEach((section) => {
+    const header = section.querySelector(".section-header");
+    const chevron = section.querySelector(".section-chevron");
+    const body = section.querySelector(".section-body");
+    if (!header || !body) return;
 
+    if (!section.classList.contains("open")) {
+      body.style.display = "none";
+      if (chevron) chevron.textContent = "▸";
+    }
+
+    header.addEventListener("click", () => {
+      const isOpen = section.classList.toggle("open");
+      body.style.display = isOpen ? "block" : "none";
+      if (chevron) chevron.textContent = isOpen ? "▾" : "▸";
+    });
+  });
+}
+
+// ----- Ticker -----
 function initTicker() {
   const el = $("#ticker-text");
   if (!el) return;
 
   const messages = [
-    "PackMesh online · watching Base pull activity…",
-    "Tiny Legends 2 · Foil Realms · Mad Myth · Aura Maxxed",
-    "Luckiest pull: Mythic Foil at $0.12 → floor $24.20",
-    "Unlucky survivor: 0xdead…beef · 0 / 400 legends pulled",
+    "SpawnEngine online • tracking Base pack activity…",
+    "Tiny Legends 2 · Foil Realms · Mad Myth · Aura Maxxed (mock ecosystems)",
+    "Luckiest pull: Mythic Foil at $0.12 → floor $24.20 (mock)",
+    "Unlucky survivor: 0xdead…beef • 0 / 400 legends pulled (mock)",
+    "Future: unified feed from Vibe, Zora, Farcaster & Base.",
   ];
 
   el.textContent = messages.join("   •   ");
 }
 
-/* --------------------------------------------------
-   Dummy data
-   -------------------------------------------------- */
-
+// ----- Dummy data -----
 const demoPacks = [
   {
     name: "Tiny Legends 2",
@@ -171,21 +105,69 @@ const demoPacks = [
 ];
 
 const demoInventory = [
-  { name: "Tiny Legends 2", status: "for-trade", rarity: "legendary", value: "$68.00" },
-  { name: "Foil Realms", status: "sealed", rarity: "mythic", value: "$32.00" },
-  { name: "Mad Myth", status: "for-trade", rarity: "rare", value: "$4.20" },
-  { name: "Chaos Draft", status: "grail", rarity: "legendary", value: "$120.00" },
+  {
+    name: "Tiny Legends 2",
+    status: "for-trade",
+    rarity: "legendary",
+    value: "$68.00",
+  },
+  {
+    name: "Foil Realms",
+    status: "sealed",
+    rarity: "mythic",
+    value: "$32.00",
+  },
+  {
+    name: "Mad Myth",
+    status: "for-trade",
+    rarity: "rare",
+    value: "$4.20",
+  },
+  {
+    name: "Chaos Draft",
+    status: "grail",
+    rarity: "legendary",
+    value: "$120.00",
+  },
 ];
 
 const luckiestPulls = [
-  { wallet: "0x596a…08ff", pack: "Tiny Legends 2", hit: "Mythic", spent: "$12", value: "$420" },
-  { wallet: "0xfeet…sn1ff", pack: "Foil Realms", hit: "Legendary Foil", spent: "$3", value: "$96" },
-  { wallet: "0x1337…c0de", pack: "Mad Myth", hit: "Full set", spent: "$48", value: "$200" },
+  {
+    wallet: "0x596a…08ff",
+    pack: "Tiny Legends 2",
+    hit: "Mythic",
+    spent: "$12",
+    value: "$420",
+  },
+  {
+    wallet: "0xfeet…sn1ff",
+    pack: "Foil Realms",
+    hit: "Legendary Foil",
+    spent: "$3",
+    value: "$96",
+  },
+  {
+    wallet: "0x1337…c0de",
+    pack: "Mad Myth",
+    hit: "Full set",
+    spent: "$48",
+    value: "$200",
+  },
 ];
 
 const unluckyPulls = [
-  { wallet: "0xdead…beef", pack: "Tiny Legends 2", hit: "0 / 400 legends", spent: "$96", value: "$40" },
-  { wallet: "0x0bad…luck", pack: "Foil Realms", hit: "Commons only", spent: "$32", value: "$10" },
+  {
+    wallet: "0xdead…beef",
+    pack: "Tiny Legends 2",
+    hit: "0 / 400 legends",
+    spent: "$96",
+  },
+  {
+    wallet: "0x0bad…luck",
+    pack: "Foil Realms",
+    hit: "Commons only",
+    spent: "$32",
+  },
 ];
 
 const statsWallets = [
@@ -194,10 +176,7 @@ const statsWallets = [
   { wallet: "0x1337…c0de", score: "8.7", pulls: 180, legends: 6 },
 ];
 
-/* --------------------------------------------------
-   Rendering helpers
-   -------------------------------------------------- */
-
+// ----- Rendering: Trading -----
 function renderTrading() {
   const grid = $("#trading-grid");
   if (!grid) return;
@@ -217,11 +196,13 @@ function renderTrading() {
     .map((p) => {
       const badges = [];
       if (p.tags.includes("verified"))
-        badges.push('<span class="badge badge-verified">Verified</span>');
+        badges.push(
+          '<span class="badge badge-verified">Verified creator</span>'
+        );
       if (p.tags.includes("new"))
-        badges.push('<span class="badge badge-new">New</span>');
+        badges.push('<span class="badge badge-new">New drop</span>');
       if (p.tags.includes("bounty"))
-        badges.push('<span class="badge badge-bounty">Bounty</span>');
+        badges.push('<span class="badge badge-bounty">Bounty active</span>');
 
       return `
         <article class="pack-card">
@@ -249,17 +230,18 @@ function renderTrading() {
       <div class="metric-card">
         <div class="metric-label">Live floor (mock)</div>
         <div class="metric-value">$0.22 → $0.46</div>
-        <div class="metric-sub">Tiny Legends 2 & Aura Maxxed currently dominate.</div>
+        <div class="metric-sub">SpawnEngine ecosystems dominating low-cap pack meta.</div>
       </div>
       <div class="metric-card">
         <div class="metric-label">24h pulls (mock)</div>
         <div class="metric-value">3 240 packs</div>
-        <div class="metric-sub">PackMesh wallets account for 18%.</div>
+        <div class="metric-sub">Future: Vibe / Zora API + onchain scan hooked in.</div>
       </div>
     `;
   }
 }
 
+// ----- Rendering: Inventory -----
 function renderInventory() {
   const grid = $("#inventory-grid");
   if (!grid) return;
@@ -290,7 +272,7 @@ function renderInventory() {
           <span class="badge badge-supply">${p.rarity}</span>
         </div>
         <div class="card-actions">
-          <button class="btn-mini">List</button>
+          <button class="btn-mini">List for Trade</button>
           <button class="btn-mini">Mark as Grail</button>
         </div>
       </article>
@@ -301,25 +283,29 @@ function renderInventory() {
   const metrics = $("#inventory-metrics");
   if (metrics) {
     const total = demoInventory.length;
-    const legends = demoInventory.filter((p) => p.rarity === "legendary").length;
+    const legends = demoInventory.filter(
+      (p) => p.rarity === "legendary"
+    ).length;
     metrics.innerHTML = `
       <div class="metric-card">
         <div class="metric-label">Total packs</div>
         <div class="metric-value">${total}</div>
-        <div class="metric-sub">Mock count for UI.</div>
+        <div class="metric-sub">Mock count – later read from onchain inventory.</div>
       </div>
       <div class="metric-card">
         <div class="metric-label">Legendaries</div>
         <div class="metric-value">${legends}</div>
-        <div class="metric-sub">Foils show up once we connect real data.</div>
+        <div class="metric-sub">Foils will get their own tier in stats view.</div>
       </div>
     `;
   }
 }
 
+// ----- Luck tables -----
 function renderLuckTables() {
   const tblLuck = $("#table-luckiest");
   const tblUnlucky = $("#table-unlucky");
+
   if (tblLuck) {
     tblLuck.innerHTML =
       `<tr><th>Wallet</th><th>Pack</th><th>Hit</th><th>Spent</th><th>Now worth</th></tr>` +
@@ -342,19 +328,20 @@ function renderLuckTables() {
   }
 }
 
+// ----- Stats -----
 function renderStats() {
   const metrics = $("#stats-metrics");
   if (metrics) {
     metrics.innerHTML = `
       <div class="metric-card">
-        <div class="metric-label">PackMesh XP (mock)</div>
+        <div class="metric-label">SpawnEngine XP (mock)</div>
         <div class="metric-value">524.6K XP</div>
-        <div class="metric-sub">Inspired by Vibe, but your own XP system.</div>
+        <div class="metric-sub">Think Vibe XP but tuned for pack ecosystems.</div>
       </div>
       <div class="metric-card">
         <div class="metric-label">Daily pulls (mock)</div>
         <div class="metric-value">1 120</div>
-        <div class="metric-sub">Will become live once we connect APIs.</div>
+        <div class="metric-sub">Later powered by unified activity feed.</div>
       </div>
     `;
   }
@@ -372,6 +359,7 @@ function renderStats() {
   }
 }
 
+// ----- Verified -----
 function renderVerified() {
   const grid = $("#verified-grid");
   if (!grid) return;
@@ -400,29 +388,30 @@ function renderVerified() {
   `;
 }
 
+// ----- Deploy Center -----
 function renderDeploy() {
   const grid = $("#deploy-grid");
   if (!grid) return;
 
   const cards = [
     {
-      title: "Vibe-style Pack NFTs",
-      desc: "Boosterbox / Wield-pack compatible series.",
+      title: "Pack NFTs · Vibe-style",
+      desc: "Booster packs compatible with Wield & Vibe-like marketplaces.",
       id: "pack",
     },
     {
       title: "Reward Token (ERC20)",
-      desc: "XP / points / bonus tokens for your collectors.",
+      desc: "XP / points / reward token for your collectors.",
       id: "token",
     },
     {
-      title: "Lootbox / Airdrop ERC1155",
-      desc: "Batch drops, mystery loot & event rewards.",
+      title: "Lootbox / Airdrop (ERC1155)",
+      desc: "Multiple rewards, event drops & cross-pack airdrops.",
       id: "loot",
     },
     {
       title: "Utility / Access NFT",
-      desc: "Passes for miniapps, Discord or special drops.",
+      desc: "Access passes for mini-apps, Discord or special drops.",
       id: "utility",
     },
   ];
@@ -450,16 +439,13 @@ function renderDeploy() {
     btn.addEventListener("click", () => {
       const id = btn.dataset.deploy;
       alert(
-        `Deploy mode "${id}" is UI mock for now.\n\nOnce the Hardhat scripts are wired we trigger /scripts/deploy*.ts from here.`
+        `Deploy mode "${id}" is UI-mock right now.\n\nLater, this will call your Hardhat scripts (PackFactory + TokenPackSeries).`
       );
     });
   });
 }
 
-/* --------------------------------------------------
-   Luck meter
-   -------------------------------------------------- */
-
+// ----- Luck meter -----
 function initLuckMeter() {
   const fill = $("#luck-fill");
   const label = $("#luck-label");
@@ -468,17 +454,14 @@ function initLuckMeter() {
   function update() {
     const value = Math.floor(30 + Math.random() * 60); // 30–90%
     fill.style.width = value + "%";
-    label.textContent = `Luck (mock): ${value}% · will move live when you open packs.`;
+    label.textContent = `Luck (mock): ${value}% · will react to real pulls later.`;
   }
 
   update();
   setInterval(update, 3500);
 }
 
-/* --------------------------------------------------
-   Pack map (canvas)
-   -------------------------------------------------- */
-
+// ----- Pack map (canvas) -----
 function initPackMap() {
   const canvas = document.getElementById("pack-map-canvas");
   if (!canvas) return;
@@ -488,7 +471,14 @@ function initPackMap() {
     const rect = canvas.getBoundingClientRect();
     canvas.width = rect.width * window.devicePixelRatio;
     canvas.height = rect.height * window.devicePixelRatio;
-    ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+    ctx.setTransform(
+      window.devicePixelRatio,
+      0,
+      0,
+      window.devicePixelRatio,
+      0,
+      0
+    );
     draw();
   };
 
@@ -540,10 +530,7 @@ function initPackMap() {
   window.addEventListener("resize", resize);
 }
 
-/* --------------------------------------------------
-   Chat
-   -------------------------------------------------- */
-
+// ----- Chat -----
 function initChat() {
   const box = $("#chat-messages");
   const input = $("#chat-input");
@@ -574,14 +561,11 @@ function initChat() {
 
   addMessage(
     "system",
-    "Wallet-to-wallet chat will live here — currently mocked messages."
+    "Wallet-to-wallet chat will live here – currently mocked messages."
   );
 }
 
-/* --------------------------------------------------
-   Wallet & theme
-   -------------------------------------------------- */
-
+// ----- Wallet & theme -----
 function updateWalletUI() {
   const statusWallet = $("#status-wallet");
   const settingsWallet = $("#settings-wallet");
@@ -598,22 +582,18 @@ function initWalletButtons() {
   const setDisconnect = $("#btn-settings-disconnect");
 
   function connect() {
-    // Mock full address; later replace with real signer.getAddress()
-    state.walletFull = "0x596a00000000000000000000000000000008ff";
-    state.wallet =
-      state.walletFull.slice(0, 6) + "…" + state.walletFull.slice(-4);
+    // Mock address
+    state.wallet = "0x596a…08ff";
     updateWalletUI();
-    $("#status-sync").textContent = "synced (mock)";
-    loadUnifiedFeed();
+    const syncEl = $("#status-sync");
+    if (syncEl) syncEl.textContent = "synced (mock)";
   }
 
   function disconnect() {
     state.wallet = null;
-    state.walletFull = null;
     updateWalletUI();
-    $("#status-sync").textContent = "waiting…";
-    const feed = $("#unified-feed");
-    if (feed) feed.innerHTML = "";
+    const syncEl = $("#status-sync");
+    if (syncEl) syncEl.textContent = "waiting…";
   }
 
   [mainBtn, setConnect].forEach((btn) => {
@@ -639,7 +619,7 @@ function initTheme() {
       const theme = p.dataset.theme;
       if (theme !== "dark") {
         alert(
-          "Only dark theme is active right now. Light will become an editor mode later."
+          "Only dark theme is enabled for now. Light mode becomes creator/editor view later."
         );
         return;
       }
@@ -652,10 +632,7 @@ function initTheme() {
   });
 }
 
-/* --------------------------------------------------
-   Verified buttons
-   -------------------------------------------------- */
-
+// ----- Verified buttons -----
 function initVerifiedButtons() {
   const btnX = $("#btn-verify-x");
   const btnFc = $("#btn-verify-fc");
@@ -681,10 +658,7 @@ function initVerifiedButtons() {
     });
 }
 
-/* --------------------------------------------------
-   Filters
-   -------------------------------------------------- */
-
+// ----- Filters -----
 function initFilters() {
   $("#trading-filters")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".filter-chip");
@@ -707,36 +681,33 @@ function initFilters() {
   });
 }
 
-/* --------------------------------------------------
-   Creator Forge buttons
-   -------------------------------------------------- */
-
+// ----- Creator Forge buttons -----
 function initCreatorForge() {
   $("#btn-upload-mock")?.addEventListener("click", () => {
     alert("Mock: 42 images ‘uploaded’ into Creator Forge.");
-    $("#forge-rarity-dist").textContent =
-      "Common 15 · Rare 14 · Epic 6 · Legendary 6 · Mythic 1";
+    const el = $("#forge-rarity-dist");
+    if (el) el.textContent = "Common 15 · Rare 14 · Epic 6 · Legendary 6 · Mythic 1";
   });
 
   $("#btn-generate-rarity")?.addEventListener("click", () => {
     alert("Mock: Rarity distribution calculated.");
-    $("#forge-rarity-dist").textContent =
-      "Common 60% · Rare 25% · Epic 10% · Legendary 4% · Mythic 1%";
+    const el = $("#forge-rarity-dist");
+    if (el)
+      el.textContent =
+        "Common 60% · Rare 25% · Epic 10% · Legendary 4% · Mythic 1%";
   });
 
   $("#btn-generate-foil")?.addEventListener("click", () => {
     alert(
-      "Mock: Foil previews generated (Base Shine · Toxic · Neon Prism)."
+      "Mock: Foil previews generated (Base Shine · Toxic · Neon Prism · more in v2)."
     );
   });
 }
 
-/* --------------------------------------------------
-   Init
-   -------------------------------------------------- */
-
+// ----- Init -----
 document.addEventListener("DOMContentLoaded", () => {
   initTabs();
+  initSections();
   initTicker();
   initFilters();
   renderTrading();
