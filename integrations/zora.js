@@ -1,12 +1,19 @@
-// /integrations/zora.js
-export async function getZoraActivity(wallet) {
-  try {
-    const res = await fetch(
-      `https://api.zora.co/discover/activity/${wallet}`,
-      { headers: { accept: "application/json" } }
-    );
-    return await res.json();
-  } catch (err) {
-    return { error: String(err) };
-  }
+// integrations/zora.js
+// Placeholder för Zora-integration (coins, mints, trades).
+
+const ZORA_ENDPOINT = "https://api.zora.co/graphql";
+
+/**
+ * Fetch Zora activity for a wallet (placeholder).
+ */
+async function fetchZoraEventsForWallet(wallet) {
+  if (!wallet) return [];
+
+  // TODO: call Zora GraphQL här.
+  // För nu returnerar vi en tom lista.
+  return [];
 }
+
+module.exports = {
+  fetchZoraEventsForWallet,
+};
