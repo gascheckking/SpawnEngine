@@ -1,155 +1,57 @@
 // services/activity.js
+// Frontend helper: fetch unified activity from the API.
+// If API fails, it falls back to a local mock so UI still works.
 
-const { getContractEvents } = require("../onchain/base");
+export async function getUnifiedActivity(wallet, contracts = []) {
+  const params = new URLSearchParams();
+  if (wallet) params.set("wallet", wallet);
+  if (contracts.length) params.set("contracts", contracts.join(","));
 
-/**
- * Base / TokenPackSeries side.
- * contracts = array of { address, abi, label }
- */
-async function fetchBasePackEvents(wallet, contracts = []) {
-  const lower = wallet?.toLowerCase?.() || "";
-  const out = [];
+  const url = `/api/wield/unified-activity?${params.toString()}`;
 
-  for (const c of contracts) {
-    try {
-      const events = await getContractEvents(c.address, c.abi, 0);
-      for (const ev of events) {
-        // very loose matching — refine later
-        const args = ev.args || [];
-        const joined = Object.values(args)
-          .map((x) => String(x).toLowerCase())
-          .join(" ");
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return data;
+  } catch (err) {
+    console.error("Unified activity failed, using mock:", err);
 
-        if (!lower || joined.includes(lower)) {
-          out.push({
-            source: `Base · ${c.label || "TokenPackSeries"}`,
-            text: `${ev.name} – ${c.label || c.address.slice(0, 10)}`,
-            ts: Date.now(),
-          });
-        }
-      }
-    } catch (err) {
-      console.error("fetchBasePackEvents error for", c.address, err.message);
-    }
+    const now = Date.now();
+
+    return {
+      wallet: wallet || "0x0000…mock",
+      source: "mock-local",
+      events: [
+        {
+          id: "e-pack-1",
+          ts: now - 45_000,
+          kind: "pack_open",
+          label: "Opened Tiny Legends style pack",
+          detail: "2x rare · 1x epic · 4x commons",
+        },
+        {
+          id: "e-burn-1",
+          ts: now - 120_000,
+          kind: "burn",
+          label: "Burned 5 commons → 2 new packs",
+          detail: "burnCommonsForTwo()",
+        },
+        {
+          id: "e-zora-1",
+          ts: now - 180_000,
+          kind: "zora",
+          label: "Minted creator coin on Base",
+          detail: "Zora coin reward from pack",
+        },
+        {
+          id: "e-cast-1",
+          ts: now - 240_000,
+          kind: "cast",
+          label: "Farcaster cast: live pull recap",
+          detail: "#onchain activity ping",
+        },
+      ],
+    };
   }
-
-  return out;
 }
-
-/**
- * Vibe.market activity (placeholder).
- * Later: call Vibe API / subgraph once available.
- */
-async function fetchVibeEvents(wallet) {
-  if (!wallet) return [];
-  return [
-    {
-      source: "Vibe.market",
-      text: `Listed 3× Foil Realms booster packs from ${short(wallet)}`,
-      ts: Date.now() - 3 * 60 * 1000,
-    },
-  ];
-}
-
-/**
- * Zora activity (placeholder).
- */
-async function fetchZoraEvents(wallet) {
-  if (!wallet) return [];
-  return [
-    {
-      source: "Zora",
-      text: `Minted a Rodeo-linked PackMesh drop from ${short(wallet)}`,
-      ts: Date.now() - 15 * 60 * 1000,
-    },
-  ];
-}
-
-/**
- * Farcaster / Neynar activity (placeholder).
- */
-async function fetchFarcasterEvents(wallet) {
-  if (!wallet) return [];
-  return [
-    {
-      source: "Farcaster",
-      text: `Cast tipped for sharing a PackMesh pull clip`,
-      ts: Date.now() - 30 * 60 * 1000,
-    },
-  ];
-}
-
-/**
- * The Base App activity (placeholder).
- */
-async function fetchBaseAppEvents(wallet) {
-  if (!wallet) return [];
-  return [
-    {
-      source: "The Base App",
-      text: `Bridged +0.42 ETH to fuel pack openings`,
-      ts: Date.now() - 60 * 60 * 1000,
-    },
-  ];
-}
-
-/**
- * Rodeo activity (placeholder).
- */
-async function fetchRodeoEvents(wallet) {
-  if (!wallet) return [];
-  return [
-    {
-      source: "Rodeo.club",
-      text: `High-score run using Tiny Legends 2 cards`,
-      ts: Date.now() - 2 * 60 * 60 * 1000,
-    },
-  ];
-}
-
-function short(addr) {
-  if (!addr || addr.length < 10) return addr || "";
-  return addr.slice(0, 6) + "…" + addr.slice(-4);
-}
-
-/**
- * Unified feed used by API layer (server-side).
- * wallet: full address
- * contracts: [{ address, abi, label }]
- */
-async function getUnifiedActivity(wallet, contracts = []) {
-  const [
-    baseEvents,
-    vibeEvents,
-    zoraEvents,
-    farcasterEvents,
-    baseAppEvents,
-    rodeoEvents,
-  ] = await Promise.all([
-    fetchBasePackEvents(wallet, contracts),
-    fetchVibeEvents(wallet),
-    fetchZoraEvents(wallet),
-    fetchFarcasterEvents(wallet),
-    fetchBaseAppEvents(wallet),
-    fetchRodeoEvents(wallet),
-  ]);
-
-  const events = [
-    ...baseEvents,
-    ...vibeEvents,
-    ...zoraEvents,
-    ...farcasterEvents,
-    ...baseAppEvents,
-    ...rodeoEvents,
-  ].sort((a, b) => b.ts - a.ts);
-
-  return {
-    wallet,
-    contracts,
-    events,
-  };
-}
-
-module.exports = {
-  getUnifiedActivity,
-};
