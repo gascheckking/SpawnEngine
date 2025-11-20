@@ -3,673 +3,368 @@ const state = {
   wallet: null,
   walletFull: null,
   theme: "dark",
-  verified: {
-    x: false,
-    farcaster: false,
-    base: false,
+  stats: {
+    xp: 524600,
+    revenueUsd: 1240.5,
+    packsOpened: 342,
+    packsCreated: 8,
+  },
+  contracts: {
+    factory: "not set",
+    guard: "not set",
+    utility: "not set",
   },
 };
 
-const $ = (q) => document.querySelector(q);
-const $$ = (q) => Array.from(document.querySelectorAll(q));
-
-// ----- Tabs -----
-function initTabs() {
-  const tabs = $$(".tab-button");
-  const views = $$(".view");
-
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", () => {
-      const viewId = tab.dataset.view;
-
-      tabs.forEach((t) => t.classList.remove("active"));
-      tab.classList.add("active");
-
-      views.forEach((v) => v.classList.remove("active"));
-      const target = $("#" + viewId);
-      if (target) target.classList.add("active");
-    });
-  });
-
-  const first = $(".tab-button");
-  if (first) first.click();
-}
-
-// ----- Rullgardiner / sections -----
-function initSections() {
-  $$(".section").forEach((section) => {
-    const header = section.querySelector(".section-header");
-    const chevron = section.querySelector(".section-chevron");
-    const body = section.querySelector(".section-body");
-    if (!header || !body) return;
-
-    if (!section.classList.contains("open")) {
-      body.style.display = "none";
-      if (chevron) chevron.textContent = "▸";
-    }
-
-    header.addEventListener("click", () => {
-      const isOpen = section.classList.toggle("open");
-      body.style.display = isOpen ? "block" : "none";
-      if (chevron) chevron.textContent = isOpen ? "▾" : "▸";
-    });
-  });
-}
-
-// ----- Ticker -----
-function initTicker() {
-  const el = $("#ticker-text");
-  if (!el) return;
-
-  const messages = [
-    "SpawnEngine online • tracking Base pack activity…",
-    "Tiny Legends 2 · Foil Realms · Mad Myth · Aura Maxxed (mock ecosystems)",
-    "Luckiest pull: Mythic Foil at $0.12 → floor $24.20 (mock)",
-    "Unlucky survivor: 0xdead…beef • 0 / 400 legends pulled (mock)",
-    "Future: unified feed from Vibe, Zora, Farcaster & Base.",
-  ];
-
-  el.textContent = messages.join("   •   ");
-}
-
-// ----- Dummy data -----
-const demoPacks = [
+// Demo data
+const demoActivity = [
   {
-    name: "Tiny Legends 2",
-    creator: "spawnizz",
-    price: "$0.24",
-    supply: "42 designs",
-    tags: ["verified", "bounty", "new"],
+    type: "PACK_OPEN",
+    text: "0x596a…08ff opened Tiny Legends 2 → Mythic foil hit",
+    time: "12s ago",
   },
   {
-    name: "Foil Realms",
-    creator: "spawnizz",
-    price: "$0.28",
-    supply: "36 designs",
-    tags: ["verified"],
+    type: "FARCASTER",
+    text: "@spawniz casted: “Mesh all packs into one stream”",
+    time: "45s ago",
   },
   {
-    name: "Aura Maxxed",
-    creator: "spawnizz",
-    price: "$0.46",
-    supply: "24 designs",
-    tags: ["new"],
+    type: "ZORA",
+    text: "Minted 3x Foil Realms index tokens on Zora",
+    time: "2m ago",
   },
   {
-    name: "Mad Myth",
-    creator: "spawnizz",
-    price: "$0.22",
-    supply: "18 designs",
-    tags: [],
+    type: "BURN",
+    text: "0xfeet…sn1ff burned 5 commons → won 2 packs",
+    time: "3m ago",
+  },
+  {
+    type: "SWAP",
+    text: "0x1337…c0de swapped 1 Mad Myth legend → 120 USDC",
+    time: "5m ago",
   },
 ];
 
 const demoInventory = [
   {
-    name: "Tiny Legends 2",
-    status: "for-trade",
+    id: "tl2-pack-1",
+    kind: "pack",
+    name: "Tiny Legends 2 Pack",
+    collection: "Tiny Legends 2",
     rarity: "legendary",
-    value: "$68.00",
-  },
-  {
-    name: "Foil Realms",
-    status: "sealed",
-    rarity: "mythic",
-    value: "$32.00",
-  },
-  {
-    name: "Mad Myth",
-    status: "for-trade",
-    rarity: "rare",
+    status: "unopened",
     value: "$4.20",
+    mint: "#482",
+    burnable: true,
+    grail: false,
   },
   {
-    name: "Chaos Draft",
-    status: "grail",
-    rarity: "legendary",
-    value: "$120.00",
+    id: "foil-realms-1",
+    kind: "pack",
+    name: "Foil Realms Booster",
+    collection: "Foil Realms",
+    rarity: "mythic",
+    status: "unopened",
+    value: "$32.00",
+    mint: "#19",
+    burnable: false,
+    grail: true,
+  },
+  {
+    id: "card-1",
+    kind: "card",
+    name: "Mad Myth · Chaos Avatar",
+    collection: "Mad Myth",
+    rarity: "rare",
+    status: "opened",
+    value: "$6.80",
+    mint: "#77",
+    burnable: true,
+    grail: false,
+  },
+  {
+    id: "card-2",
+    kind: "card",
+    name: "Aura Maxxed · Neon Shell",
+    collection: "Aura Maxxed",
+    rarity: "epic",
+    status: "opened",
+    value: "$14.00",
+    mint: "#11",
+    burnable: false,
+    grail: true,
   },
 ];
 
-const luckiestPulls = [
+const demoSeries = [
   {
-    wallet: "0x596a…08ff",
-    pack: "Tiny Legends 2",
-    hit: "Mythic",
-    spent: "$12",
-    value: "$420",
+    name: "Tiny Legends 2 · TokenPackSeries",
+    addr: "0xTL2…PACK",
+    chain: "Base Sepolia",
   },
   {
-    wallet: "0xfeet…sn1ff",
-    pack: "Foil Realms",
-    hit: "Legendary Foil",
-    spent: "$3",
-    value: "$96",
-  },
-  {
-    wallet: "0x1337…c0de",
-    pack: "Mad Myth",
-    hit: "Full set",
-    spent: "$48",
-    value: "$200",
+    name: "Foil Realms · TokenPackSeries",
+    addr: "0xFOIL…PACK",
+    chain: "Base",
   },
 ];
 
-const unluckyPulls = [
+const demoCreateTypes = [
   {
-    wallet: "0xdead…beef",
-    pack: "Tiny Legends 2",
-    hit: "0 / 400 legends",
-    spent: "$96",
+    id: "token-pack",
+    title: "Token Pack (ERC20)",
+    desc: "Classic EV packs with ERC20 payout token and ReserveGuard.",
   },
   {
-    wallet: "0x0bad…luck",
-    pack: "Foil Realms",
-    hit: "Commons only",
-    spent: "$32",
+    id: "nft-pack",
+    title: "NFT Pack (ERC721/1155)",
+    desc: "Card-based packs for art collections and trading series.",
+  },
+  {
+    id: "zora-pack",
+    title: "Zora Coin Pack",
+    desc: "Bundles of creator coins and Zora-based rewards.",
+  },
+  {
+    id: "hybrid-pack",
+    title: "Hybrid / Social Pack",
+    desc: "XP, quests and social boosts combined with onchain rewards.",
   },
 ];
 
-const statsWallets = [
-  { wallet: "0x596a…08ff", score: "9.8", pulls: 420, legends: 16 },
-  { wallet: "0xfeet…sn1ff", score: "9.1", pulls: 260, legends: 9 },
-  { wallet: "0x1337…c0de", score: "8.7", pulls: 180, legends: 6 },
-];
+// Helpers
+const $ = (q) => document.querySelector(q);
+const $$ = (q) => Array.from(document.querySelectorAll(q));
 
-// ----- Rendering: Trading -----
-function renderTrading() {
-  const grid = $("#trading-grid");
+// Nav
+function initNav() {
+  const buttons = $$(".nav-btn");
+  const screens = $$(".screen");
+
+  buttons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.screen;
+      buttons.forEach((b) => b.classList.remove("active"));
+      screens.forEach((s) => s.classList.remove("active"));
+
+      btn.classList.add("active");
+      const el = document.getElementById(target);
+      if (el) el.classList.add("active");
+    });
+  });
+}
+
+// Collapsibles
+function initCollapsibles() {
+  $$(".section-header").forEach((hdr) => {
+    hdr.addEventListener("click", () => {
+      const id = hdr.dataset.toggle;
+      const content = document.getElementById(id);
+      const section = hdr.closest(".section");
+      if (!content || !section) return;
+
+      const isOpen = content.classList.contains("open");
+      content.classList.toggle("open", !isOpen);
+      section.classList.toggle("open", !isOpen);
+    });
+  });
+}
+
+// Ticker
+function initTicker() {
+  const el = $("#ticker-text");
+  if (!el) return;
+
+  const msgs = [
+    "SpawnEngine Mesh online — merging pack pulls, swaps and burns into one stream.",
+    "Live mythic hit → Tiny Legends 2 → EV spike.",
+    "Farcaster casts and Zora mints soon wired directly into this ticker.",
+    "ReserveGuard watching: 2x mythic coverage + buffer per series.",
+  ];
+  el.textContent = msgs.join("   •   ");
+}
+
+// Wallet
+function updateWalletUI() {
+  const short = state.wallet || "Not connected";
+  const full = state.walletFull || "";
+  $("#status-wallet").textContent = short;
+  $("#status-sync").textContent = state.wallet ? "synced (mock)" : "idle";
+  $("#settings-wallet") && ($("#settings-wallet").textContent = full || short);
+}
+
+function initWalletButtons() {
+  const mainBtn = $("#btn-connect");
+
+  function mockConnect() {
+    state.walletFull = "0x596aA9F10b8459aF0C78cF990eF3089908fF08ff";
+    state.wallet = "0x596a…08ff";
+    updateWalletUI();
+    renderProfileSummary();
+    renderInventory();
+    renderLiveFeed();
+  }
+
+  if (mainBtn) {
+    mainBtn.addEventListener("click", () => {
+      if (state.wallet) {
+        alert("Wallet already mocked as connected.");
+      } else {
+        mockConnect();
+      }
+    });
+  }
+}
+
+// Profile summary
+function renderProfileSummary() {
+  const box = $("#profile-summary-metrics");
+  if (!box) return;
+
+  const { xp, revenueUsd, packsOpened, packsCreated } = state.stats;
+
+  box.innerHTML = `
+    <div class="metric-card">
+      <div class="metric-label">Mesh XP (mock)</div>
+      <div class="metric-value">${xp.toLocaleString("en-US")} XP</div>
+      <div class="metric-sub">From pulls, burns, swaps and social boosts.</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Total revenue (mock)</div>
+      <div class="metric-value">$${revenueUsd.toFixed(2)}</div>
+      <div class="metric-sub">Creator share across all your series.</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Packs opened</div>
+      <div class="metric-value">${packsOpened}</div>
+      <div class="metric-sub">TokenPackSeries-style EV distribution.</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Series created</div>
+      <div class="metric-value">${packsCreated}</div>
+      <div class="metric-sub">More series = more mesh data.</div>
+    </div>
+  `;
+}
+
+// Social identity
+function renderProfileSocial() {
+  const grid = $("#profile-social-grid");
   if (!grid) return;
 
-  const activeFilter =
-    $("#trading-filters .filter-chip.active")?.dataset.filter || "all";
+  grid.innerHTML = `
+    <div class="metric-card">
+      <div class="metric-label">Farcaster</div>
+      <div class="metric-value">@spawniz (mock)</div>
+      <div class="metric-sub">Future: sync casts, reactions and miniapp actions.</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Zora</div>
+      <div class="metric-value">/spawniz</div>
+      <div class="metric-sub">Index of drops, coins and pack-linked rewards.</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">The Base App</div>
+      <div class="metric-value">Onchain history</div>
+      <div class="metric-sub">Using your Base activity as a trust layer.</div>
+    </div>
+  `;
+}
 
-  const filtered = demoPacks.filter((p) => {
-    if (activeFilter === "all") return true;
-    if (activeFilter === "verified") return p.tags.includes("verified");
-    if (activeFilter === "new") return p.tags.includes("new");
-    if (activeFilter === "bounty") return p.tags.includes("bounty");
+// Live unified feed
+function renderLiveFeed() {
+  const feed = $("#live-feed");
+  if (!feed) return;
+
+  const items = demoActivity;
+  feed.innerHTML = items
+    .map(
+      (a) => `
+      <div class="feed-item">
+        <div class="feed-main">
+          <span class="feed-type">${a.type}</span>
+          <span class="feed-text">${a.text}</span>
+        </div>
+        <div class="feed-meta">${a.time}</div>
+      </div>
+    `
+    )
+    .join("");
+}
+
+// Inventory
+function renderInventory() {
+  const list = $("#inventory-list");
+  if (!list) return;
+
+  const active =
+    $("#inventory-filters .filter-chip.active")?.dataset.filter || "all";
+
+  const filtered = demoInventory.filter((item) => {
+    if (active === "all") return true;
+    if (active === "packs") return item.kind === "pack";
+    if (active === "cards") return item.kind === "card";
+    if (active === "burnable") return item.burnable;
+    if (active === "grails") return item.grail;
     return true;
   });
 
-  grid.innerHTML = filtered
+  list.innerHTML = filtered
     .map((p) => {
-      const badges = [];
-      if (p.tags.includes("verified"))
-        badges.push(
-          '<span class="badge badge-verified">Verified creator</span>'
-        );
-      if (p.tags.includes("new"))
-        badges.push('<span class="badge badge-new">New drop</span>');
-      if (p.tags.includes("bounty"))
-        badges.push('<span class="badge badge-bounty">Bounty active</span>');
+      const rarityClass = `rarity-${p.rarity}`;
+      const statusClass =
+        p.status === "unopened" ? "status-unopened" : "status-opened";
+      const burnTag = p.burnable
+        ? `<span class="inv-badge inv-badge-burnable">Burnable</span>`
+        : "";
+      const grailTag = p.grail
+        ? `<span class="inv-badge inv-badge-grail">Grail</span>`
+        : "";
 
       return `
-        <article class="pack-card">
-          <div class="pack-header">
-            <div class="pack-title">${p.name}</div>
-            <div class="pack-meta">
-              <span class="pack-price">${p.price}</span>
-              <span class="pack-creator">by ${p.creator}</span>
-            </div>
+        <article class="inventory-card">
+          <div class="inv-thumb-shell">
+            <div class="inv-thumb-faux"></div>
           </div>
-          <div class="pack-badges">${badges.join("")}</div>
-          <div class="card-actions">
-            <button class="btn-mini">View</button>
-            <button class="btn-mini">Open</button>
-            <button class="btn-mini">Trade</button>
+          <div class="inv-info">
+            <div class="inv-title">${p.name}</div>
+            <div class="inv-collection">${p.collection}</div>
+            <div class="inv-tags">
+              <span class="inv-badge ${rarityClass}">${p.rarity}</span>
+              <span class="inv-badge ${statusClass}">${p.status}</span>
+              ${burnTag}
+              ${grailTag}
+            </div>
+            <div class="inv-meta">
+              <span>${p.mint}</span> • <span>${p.value}</span>
+            </div>
+            <div class="inv-actions">
+              <button class="btn-mini">View</button>
+              <button class="btn-mini">Mark for Trade</button>
+            </div>
           </div>
         </article>
       `;
     })
     .join("");
 
-  const metrics = $("#trading-metrics");
-  if (metrics) {
-    metrics.innerHTML = `
-      <div class="metric-card">
-        <div class="metric-label">Live floor (mock)</div>
-        <div class="metric-value">$0.22 → $0.46</div>
-        <div class="metric-sub">SpawnEngine ecosystems dominating low-cap pack meta.</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">24h pulls (mock)</div>
-        <div class="metric-value">3 240 packs</div>
-        <div class="metric-sub">Future: Vibe / Zora API + onchain scan hooked in.</div>
-      </div>
-    `;
+  const total = demoInventory.length;
+  const packs = demoInventory.filter((i) => i.kind === "pack").length;
+  const cards = demoInventory.filter((i) => i.kind === "card").length;
+  const grails = demoInventory.filter((i) => i.grail).length;
+
+  // Optional: summary under list
+  if (!$("#inventory-summary")) {
+    const summary = document.createElement("p");
+    summary.id = "inventory-summary";
+    summary.className = "metric-sub muted";
+    list.parentElement.appendChild(summary);
   }
+  $("#inventory-summary").textContent = `Total items: ${total} · Packs: ${packs} · Cards: ${cards} · Grails: ${grails}`;
 }
 
-// ----- Rendering: Inventory -----
-function renderInventory() {
-  const grid = $("#inventory-grid");
-  if (!grid) return;
-
-  const activeFilter =
-    $("#inventory-filters .filter-chip.active")?.dataset.filter || "all";
-
-  const filtered = demoInventory.filter((p) => {
-    if (activeFilter === "all") return true;
-    if (activeFilter === "for-trade") return p.status === "for-trade";
-    if (activeFilter === "sealed") return p.status === "sealed";
-    if (activeFilter === "grail") return p.status === "grail";
-    return true;
-  });
-
-  grid.innerHTML = filtered
-    .map(
-      (p) => `
-      <article class="pack-card">
-        <div class="pack-header">
-          <div class="pack-title">${p.name}</div>
-          <div class="pack-meta">
-            <span>${p.value}</span>
-            <span class="pack-creator">${p.status.toUpperCase()}</span>
-          </div>
-        </div>
-        <div class="pack-badges">
-          <span class="badge badge-supply">${p.rarity}</span>
-        </div>
-        <div class="card-actions">
-          <button class="btn-mini">List for Trade</button>
-          <button class="btn-mini">Mark as Grail</button>
-        </div>
-      </article>
-    `
-    )
-    .join("");
-
-  const metrics = $("#inventory-metrics");
-  if (metrics) {
-    const total = demoInventory.length;
-    const legends = demoInventory.filter(
-      (p) => p.rarity === "legendary"
-    ).length;
-    metrics.innerHTML = `
-      <div class="metric-card">
-        <div class="metric-label">Total packs</div>
-        <div class="metric-value">${total}</div>
-        <div class="metric-sub">Mock count – later read from onchain inventory.</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Legendaries</div>
-        <div class="metric-value">${legends}</div>
-        <div class="metric-sub">Foils will get their own tier in stats view.</div>
-      </div>
-    `;
-  }
-}
-
-// ----- Luck tables -----
-function renderLuckTables() {
-  const tblLuck = $("#table-luckiest");
-  const tblUnlucky = $("#table-unlucky");
-
-  if (tblLuck) {
-    tblLuck.innerHTML =
-      `<tr><th>Wallet</th><th>Pack</th><th>Hit</th><th>Spent</th><th>Now worth</th></tr>` +
-      luckiestPulls
-        .map(
-          (r) =>
-            `<tr><td>${r.wallet}</td><td>${r.pack}</td><td>${r.hit}</td><td>${r.spent}</td><td>${r.value}</td></tr>`
-        )
-        .join("");
-  }
-  if (tblUnlucky) {
-    tblUnlucky.innerHTML =
-      `<tr><th>Wallet</th><th>Pack</th><th>Result</th><th>Spent</th></tr>` +
-      unluckyPulls
-        .map(
-          (r) =>
-            `<tr><td>${r.wallet}</td><td>${r.pack}</td><td>${r.hit}</td><td>${r.spent}</td></tr>`
-        )
-        .join("");
-  }
-}
-
-// ----- Stats -----
-function renderStats() {
-  const metrics = $("#stats-metrics");
-  if (metrics) {
-    metrics.innerHTML = `
-      <div class="metric-card">
-        <div class="metric-label">SpawnEngine XP (mock)</div>
-        <div class="metric-value">524.6K XP</div>
-        <div class="metric-sub">Think Vibe XP but tuned for pack ecosystems.</div>
-      </div>
-      <div class="metric-card">
-        <div class="metric-label">Daily pulls (mock)</div>
-        <div class="metric-value">1 120</div>
-        <div class="metric-sub">Later powered by unified activity feed.</div>
-      </div>
-    `;
-  }
-
-  const tbl = $("#stats-top-wallets");
-  if (tbl) {
-    tbl.innerHTML =
-      `<tr><th>Wallet</th><th>Pull score</th><th>Pulls</th><th>Legends</th></tr>` +
-      statsWallets
-        .map(
-          (w) =>
-            `<tr><td>${w.wallet}</td><td>${w.score}</td><td>${w.pulls}</td><td>${w.legends}</td></tr>`
-        )
-        .join("");
-  }
-}
-
-// ----- Verified -----
-function renderVerified() {
-  const grid = $("#verified-grid");
-  if (!grid) return;
-
-  const statusChip = (ok) =>
-    ok
-      ? '<span class="badge badge-verified">Linked</span>'
-      : '<span class="badge">Not linked</span>';
-
-  grid.innerHTML = `
-    <div class="metric-card">
-      <div class="metric-label">X (Twitter)</div>
-      <div class="metric-value">Identity Sync</div>
-      <div class="metric-sub">Status: ${statusChip(state.verified.x)}</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Farcaster</div>
-      <div class="metric-value">Warp handle</div>
-      <div class="metric-sub">Status: ${statusChip(state.verified.farcaster)}</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Base App</div>
-      <div class="metric-value">Onchain history</div>
-      <div class="metric-sub">Status: ${statusChip(state.verified.base)}</div>
-    </div>
-  `;
-}
-
-// ----- Deploy Center -----
-function renderDeploy() {
-  const grid = $("#deploy-grid");
-  if (!grid) return;
-
-  const cards = [
-    {
-      title: "Pack NFTs · Vibe-style",
-      desc: "Booster packs compatible with Wield & Vibe-like marketplaces.",
-      id: "pack",
-    },
-    {
-      title: "Reward Token (ERC20)",
-      desc: "XP / points / reward token for your collectors.",
-      id: "token",
-    },
-    {
-      title: "Lootbox / Airdrop (ERC1155)",
-      desc: "Multiple rewards, event drops & cross-pack airdrops.",
-      id: "loot",
-    },
-    {
-      title: "Utility / Access NFT",
-      desc: "Access passes for mini-apps, Discord or special drops.",
-      id: "utility",
-    },
-  ];
-
-  grid.innerHTML = cards
-    .map(
-      (c) => `
-      <article class="pack-card">
-        <div class="pack-header">
-          <div class="pack-title">${c.title}</div>
-        </div>
-        <div class="pack-badges">
-          <span class="badge badge-supply">Deploy mode</span>
-        </div>
-        <p class="metric-sub">${c.desc}</p>
-        <div class="card-actions">
-          <button class="btn-mini" data-deploy="${c.id}">Prepare Deploy</button>
-        </div>
-      </article>
-    `
-    )
-    .join("");
-
-  grid.querySelectorAll("[data-deploy]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const id = btn.dataset.deploy;
-      alert(
-        `Deploy mode "${id}" is UI-mock right now.\n\nLater, this will call your Hardhat scripts (PackFactory + TokenPackSeries).`
-      );
-    });
-  });
-}
-
-// ----- Luck meter -----
-function initLuckMeter() {
-  const fill = $("#luck-fill");
-  const label = $("#luck-label");
-  if (!fill || !label) return;
-
-  function update() {
-    const value = Math.floor(30 + Math.random() * 60); // 30–90%
-    fill.style.width = value + "%";
-    label.textContent = `Luck (mock): ${value}% · will react to real pulls later.`;
-  }
-
-  update();
-  setInterval(update, 3500);
-}
-
-// ----- Pack map (canvas) -----
-function initPackMap() {
-  const canvas = document.getElementById("pack-map-canvas");
-  if (!canvas) return;
-
-  const ctx = canvas.getContext("2d");
-  const resize = () => {
-    const rect = canvas.getBoundingClientRect();
-    canvas.width = rect.width * window.devicePixelRatio;
-    canvas.height = rect.height * window.devicePixelRatio;
-    ctx.setTransform(
-      window.devicePixelRatio,
-      0,
-      0,
-      window.devicePixelRatio,
-      0,
-      0
-    );
-    draw();
-  };
-
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    const nodes = [
-      { x: 80, y: 120, r: 26, color: "#3dffb8", label: "TL2" },
-      { x: 200, y: 80, r: 22, color: "#ff1744", label: "Foil" },
-      { x: 300, y: 150, r: 18, color: "#ffeb3b", label: "Aura" },
-      { x: 180, y: 200, r: 20, color: "#7c4dff", label: "Myth" },
-    ];
-
-    ctx.strokeStyle = "rgba(255,255,255,0.18)";
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(nodes[0].x, nodes[0].y);
-    for (let i = 1; i < nodes.length; i++) {
-      ctx.lineTo(nodes[i].x, nodes[i].y);
-    }
-    ctx.closePath();
-    ctx.stroke();
-
-    nodes.forEach((n) => {
-      const gradient = ctx.createRadialGradient(
-        n.x - 4,
-        n.y - 6,
-        4,
-        n.x,
-        n.y,
-        n.r
-      );
-      gradient.addColorStop(0, "#ffffff");
-      gradient.addColorStop(0.4, n.color);
-      gradient.addColorStop(1, "rgba(0,0,0,0.9)");
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = "#ffffff";
-      ctx.font = "10px system-ui";
-      ctx.textAlign = "center";
-      ctx.fillText(n.label, n.x, n.y + n.r + 12);
-    });
-  }
-
-  resize();
-  window.addEventListener("resize", resize);
-}
-
-// ----- Chat -----
-function initChat() {
-  const box = $("#chat-messages");
-  const input = $("#chat-input");
-  const send = $("#chat-send");
-  if (!box || !input || !send) return;
-
-  function addMessage(from, text) {
-    const div = document.createElement("div");
-    div.className = "msg";
-    div.innerHTML = `<div class="msg-from">${from}</div><div class="msg-text">${text}</div>`;
-    box.appendChild(div);
-    box.scrollTop = box.scrollHeight;
-  }
-
-  send.addEventListener("click", () => {
-    const v = input.value.trim();
-    if (!v) return;
-    addMessage(state.wallet || "you · 0x…", v);
-    input.value = "";
-  });
-
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      send.click();
-    }
-  });
-
-  addMessage(
-    "system",
-    "Wallet-to-wallet chat will live here – currently mocked messages."
-  );
-}
-
-// ----- Wallet & theme -----
-function updateWalletUI() {
-  const statusWallet = $("#status-wallet");
-  const settingsWallet = $("#settings-wallet");
-  if (statusWallet) statusWallet.textContent = state.wallet || "Not connected";
-  if (settingsWallet)
-    settingsWallet.textContent = state.wallet
-      ? `Connected: ${state.wallet}`
-      : "Not connected.";
-}
-
-function initWalletButtons() {
-  const mainBtn = $("#btn-connect");
-  const setConnect = $("#btn-settings-connect");
-  const setDisconnect = $("#btn-settings-disconnect");
-
-  function connect() {
-    // Mock address
-    state.wallet = "0x596a…08ff";
-    updateWalletUI();
-    const syncEl = $("#status-sync");
-    if (syncEl) syncEl.textContent = "synced (mock)";
-  }
-
-  function disconnect() {
-    state.wallet = null;
-    updateWalletUI();
-    const syncEl = $("#status-sync");
-    if (syncEl) syncEl.textContent = "waiting…";
-  }
-
-  [mainBtn, setConnect].forEach((btn) => {
-    if (!btn) return;
-    btn.addEventListener("click", () => {
-      if (state.wallet) {
-        alert("Wallet already mocked as connected.");
-      } else {
-        connect();
-      }
-    });
-  });
-
-  if (setDisconnect) setDisconnect.addEventListener("click", disconnect);
-}
-
-function initTheme() {
-  const previews = $$(".theme-preview");
-  const statusTheme = $("#status-theme");
-
-  previews.forEach((p) => {
-    p.addEventListener("click", () => {
-      const theme = p.dataset.theme;
-      if (theme !== "dark") {
-        alert(
-          "Only dark theme is enabled for now. Light mode becomes creator/editor view later."
-        );
-        return;
-      }
-      previews.forEach((x) => x.classList.remove("active"));
-      p.classList.add("active");
-      state.theme = theme;
-      if (statusTheme) statusTheme.textContent = "Dark";
-      document.documentElement.style.backgroundColor = "#03010b";
-    });
-  });
-}
-
-// ----- Verified buttons -----
-function initVerifiedButtons() {
-  const btnX = $("#btn-verify-x");
-  const btnFc = $("#btn-verify-fc");
-  const btnBase = $("#btn-verify-base");
-
-  if (btnX)
-    btnX.addEventListener("click", () => {
-      state.verified.x = true;
-      alert("Mock: X account linked.");
-      renderVerified();
-    });
-  if (btnFc)
-    btnFc.addEventListener("click", () => {
-      state.verified.farcaster = true;
-      alert("Mock: Farcaster handle linked.");
-      renderVerified();
-    });
-  if (btnBase)
-    btnBase.addEventListener("click", () => {
-      state.verified.base = true;
-      alert("Mock: Base activity verified.");
-      renderVerified();
-    });
-}
-
-// ----- Filters -----
-function initFilters() {
-  $("#trading-filters")?.addEventListener("click", (e) => {
-    const btn = e.target.closest(".filter-chip");
-    if (!btn) return;
-    $$("#trading-filters .filter-chip").forEach((b) =>
-      b.classList.remove("active")
-    );
-    btn.classList.add("active");
-    renderTrading();
-  });
-
+// Filters
+function initInventoryFilters() {
   $("#inventory-filters")?.addEventListener("click", (e) => {
     const btn = e.target.closest(".filter-chip");
     if (!btn) return;
@@ -681,47 +376,83 @@ function initFilters() {
   });
 }
 
-// ----- Creator Forge buttons -----
-function initCreatorForge() {
-  $("#btn-upload-mock")?.addEventListener("click", () => {
-    alert("Mock: 42 images ‘uploaded’ into Creator Forge.");
-    const el = $("#forge-rarity-dist");
-    if (el) el.textContent = "Common 15 · Rare 14 · Epic 6 · Legendary 6 · Mythic 1";
-  });
+// Create Packs cards
+function renderCreatePacks() {
+  const grid = $("#create-pack-grid");
+  if (!grid) return;
 
-  $("#btn-generate-rarity")?.addEventListener("click", () => {
-    alert("Mock: Rarity distribution calculated.");
-    const el = $("#forge-rarity-dist");
-    if (el)
-      el.textContent =
-        "Common 60% · Rare 25% · Epic 10% · Legendary 4% · Mythic 1%";
-  });
+  grid.innerHTML = demoCreateTypes
+    .map(
+      (c) => `
+      <article class="pack-card">
+        <div class="pack-header">
+          <div class="pack-title">${c.title}</div>
+        </div>
+        <p class="metric-sub">${c.desc}</p>
+        <div class="card-actions">
+          <button class="btn-mini" data-create="${c.id}">Configure</button>
+        </div>
+      </article>
+    `
+    )
+    .join("");
 
-  $("#btn-generate-foil")?.addEventListener("click", () => {
-    alert(
-      "Mock: Foil previews generated (Base Shine · Toxic · Neon Prism · more in v2)."
-    );
+  grid.querySelectorAll("[data-create]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.create;
+      alert(
+        `Pack type "${id}" is UI-only right now.\n\nLater this will prefill params for your PackFactory + TokenPackSeries deploy.`
+      );
+    });
   });
 }
 
-// ----- Init -----
+// Contracts screen
+function renderContracts() {
+  const f = $("#addr-factory");
+  const g = $("#addr-guard");
+  const u = $("#addr-utility");
+  if (f) f.textContent = state.contracts.factory;
+  if (g) g.textContent = state.contracts.guard;
+  if (u) u.textContent = state.contracts.utility;
+
+  const list = $("#series-list");
+  if (!list) return;
+
+  list.innerHTML = demoSeries
+    .map(
+      (s) => `
+      <div class="activity-item">
+        <div class="activity-main">
+          <div class="activity-wallet">${s.name}</div>
+          <div class="activity-pack mono">${s.addr}</div>
+        </div>
+        <div class="activity-meta">${s.chain}</div>
+      </div>
+    `
+    )
+    .join("");
+}
+
+// Theme (dark only)
+function initTheme() {
+  $("#status-theme").textContent = "Dark";
+}
+
+// Init
 document.addEventListener("DOMContentLoaded", () => {
-  initTabs();
-  initSections();
+  initNav();
+  initCollapsibles();
   initTicker();
-  initFilters();
-  renderTrading();
-  renderInventory();
-  renderLuckTables();
-  renderStats();
-  renderVerified();
-  renderDeploy();
-  initLuckMeter();
-  initPackMap();
-  initChat();
   initWalletButtons();
+  initInventoryFilters();
   initTheme();
-  initVerifiedButtons();
-  initCreatorForge();
+
+  renderProfileSummary();
+  renderProfileSocial();
+  renderLiveFeed();
+  renderInventory();
+  renderCreatePacks();
+  renderContracts();
   updateWalletUI();
 });
