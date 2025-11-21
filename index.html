@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="utf-8" />
   <title>SpawnEngine — Onchain Pack Factory</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
@@ -18,7 +18,7 @@
         </div>
       </div>
       <div class="header-right">
-        <div class="network-pill" id="network-pill">Base · Pack ecosystems</div>
+        <div class="network-pill">Base · Pack ecosystems</div>
         <button class="btn-primary" id="btn-connect">Connect Wallet</button>
       </div>
     </header>
@@ -27,466 +27,144 @@
     <div class="ticker-bar">
       <div class="ticker-label">Live pulls</div>
       <div class="ticker-track">
-        <div class="ticker-content" id="ticker-text">
+        <div class="ticker-content">
           Loading recent pulls…
         </div>
       </div>
     </div>
 
     <!-- Status strip -->
-    <div class="status-strip" id="status-strip">
-      <div class="status-chip">Wallet: <span id="status-wallet">Not connected</span></div>
-      <div class="status-chip">Wield API: <span id="status-wield">Mock mode</span></div>
-      <div class="status-chip">Sync: <span id="status-sync">waiting…</span></div>
-      <div class="status-chip">Theme: <span id="status-theme">Dark</span></div>
+    <div class="status-strip">
+      <div class="status-chip" id="chip-wallet">Wallet: Disconnected</div>
+      <div class="status-chip">Mode: Mock</div>
+      <div class="status-chip">Sync: Live (mock)</div>
     </div>
 
     <!-- Tabs -->
-    <nav class="tab-bar">
-      <button class="tab-button active" data-view="view-trading">Trading</button>
-      <button class="tab-button" data-view="view-inventory">My Packs</button>
-      <button class="tab-button" data-view="view-creator">Creator Forge</button>
-      <button class="tab-button" data-view="view-pulllab">Pull Lab</button>
-      <button class="tab-button" data-view="view-maps">Pack Maps</button>
-      <button class="tab-button" data-view="view-verified">Warp Verified</button>
-      <button class="tab-button" data-view="view-chat">Bubbles / Chat</button>
-      <button class="tab-button" data-view="view-stats">Stats</button>
-      <button class="tab-button" data-view="view-deploy">Deploy Center</button>
-      <button class="tab-button" data-view="view-settings">Settings</button>
+    <nav class="tab-bar main-nav">
+      <button class="tab-button nav-btn active" data-screen="view-feed">Feed</button>
+      <button class="tab-button nav-btn" data-screen="view-trading">Trading</button>
+      <button class="tab-button nav-btn" data-screen="view-inventory">My Packs</button>
+      <button class="tab-button nav-btn" data-screen="view-luck">Pull Lab</button>
+      <button class="tab-button nav-btn" data-screen="view-chat">Chat</button>
     </nav>
 
     <!-- Views -->
-    <div class="view-container">
-
-      <!-- Trading -->
-      <section class="view active" id="view-trading">
+    <div class="view-container screen-container">
+      <!-- Unified Feed -->
+      <section class="view screen active" id="view-feed">
         <div class="view-header">
-          <h2>Pack Trading <span class="tag">Live</span></h2>
-          <p>Open, collect & trade packs across Base, Vibe-style markets & more.</p>
+          <h2>Unified Activity Feed <span class="tag">Mesh</span></h2>
+          <p>Pack opens, burns, swaps & Zora buys in one stream.</p>
         </div>
 
-        <!-- Featured hero -->
-        <section class="section open">
+        <div class="section open">
           <button class="section-header" type="button">
-            <span>Featured ecosystem spotlight</span>
-            <span class="section-chevron">▾</span>
+            <span>Live activity</span>
+            <span class="toggle-icon">▾</span>
           </button>
-          <div class="section-body">
-            <article class="featured-pack">
-              <div class="featured-main">
-                <h3>SpawnEngine · Multi-creator Pack Mesh</h3>
-                <p>
-                  One hub for Tiny Legends, Foil Realms, Mad Myth & future series.
-                  Track pulls, whales & cross-market liquidity in one clean panel.
-                </p>
-                <div class="featured-actions">
-                  <button class="btn-primary btn-featured">Jump into Trading</button>
-                  <button class="btn-ghost btn-featured-ghost">View Creator Mesh</button>
-                </div>
-              </div>
-              <div class="featured-meta">
-                <div class="featured-pill">Live on Base</div>
-                <div class="featured-stat">
-                  <span class="label">24h pulls (mock)</span>
-                  <span class="value">3 240</span>
-                </div>
-                <div class="featured-stat">
-                  <span class="label">Active series</span>
-                  <span class="value">18</span>
-                </div>
-                <div class="featured-stat">
-                  <span class="label">Connected venues</span>
-                  <span class="value">Vibe · Zora · Farcaster</span>
-                </div>
-              </div>
-            </article>
+          <div class="section-content">
+            <div id="feed-list" class="feed-list"></div>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <!-- Market list -->
-        <section class="section open">
+      <!-- Trading / Metrics -->
+      <section class="view screen" id="view-trading">
+        <div class="view-header">
+          <h2>Trading <span class="tag">Overview</span></h2>
+          <p>High-level market stats for SpawnEngine packs.</p>
+        </div>
+
+        <div class="section open">
           <button class="section-header" type="button">
-            <span>Live market list</span>
-            <span class="section-chevron">▾</span>
+            <span>Market metrics</span>
+            <span class="toggle-icon">▾</span>
           </button>
-          <div class="section-body">
-            <div class="filter-row" id="trading-filters">
-              <button class="filter-chip active" data-filter="all">All packs</button>
-              <button class="filter-chip" data-filter="new">New</button>
-              <button class="filter-chip" data-filter="verified">Verified</button>
-              <button class="filter-chip" data-filter="bounty">Big bounties</button>
-            </div>
-
-            <div class="card-grid compact" id="trading-grid"></div>
-
-            <div class="panel">
-              <h3>Marketplace Signals</h3>
-              <div class="metric-grid" id="trading-metrics"></div>
-            </div>
+          <div class="section-content">
+            <div id="trading-metrics" class="metric-grid"></div>
           </div>
-        </section>
+        </div>
       </section>
 
       <!-- Inventory -->
-      <section class="view" id="view-inventory">
+      <section class="view screen" id="view-inventory">
         <div class="view-header">
-          <h2>My Packs / For Trade</h2>
-          <p>Your inventory – sealed, grails & trade slots.</p>
+          <h2>My Packs / Inventory</h2>
+          <p>Opened hits, sealed packs & grails in one list.</p>
         </div>
 
-        <section class="section open">
+        <div class="section open">
           <button class="section-header" type="button">
-            <span>Collection overview</span>
-            <span class="section-chevron">▾</span>
+            <span>Inventory</span>
+            <span class="toggle-icon">▾</span>
           </button>
-          <div class="section-body">
-            <div class="filter-row" id="inventory-filters">
-              <button class="filter-chip active" data-filter="all">All</button>
-              <button class="filter-chip" data-filter="for-trade">For Trade</button>
-              <button class="filter-chip" data-filter="sealed">Sealed</button>
-              <button class="filter-chip" data-filter="grail">Grails</button>
-            </div>
-
-            <div class="card-grid compact" id="inventory-grid"></div>
-
-            <div class="panel">
-              <h3>Inventory Summary</h3>
-              <div class="metric-grid" id="inventory-metrics"></div>
-            </div>
+          <div class="section-content">
+            <div id="inventory-list" class="inventory-grid"></div>
           </div>
-        </section>
-      </section>
-
-      <!-- Creator Forge -->
-      <section class="view" id="view-creator">
-        <div class="view-header">
-          <h2>Creator Forge <span class="tag">Build</span></h2>
-          <p>Build full series directly in SpawnEngine – art → rarity → foil → deploy.</p>
         </div>
-
-        <section class="section open">
-          <button class="section-header" type="button">
-            <span>Upload & layout</span>
-            <span class="section-chevron">▾</span>
-          </button>
-          <div class="section-body">
-            <div class="panel">
-              <h3>Step 1 — Art Upload</h3>
-              <p class="muted">Drop up to 100 images or select locally (mock UI for now).</p>
-              <div class="button-row">
-                <button class="btn-primary" id="btn-upload-mock">Mock upload</button>
-                <button class="btn-ghost">Use SpawnEngine template</button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="section">
-          <button class="section-header" type="button">
-            <span>Rarity & foil engine</span>
-            <span class="section-chevron">▾</span>
-          </button>
-          <div class="section-body">
-            <div class="panel">
-              <h3>Step 2 — Rarity & Foil Engine</h3>
-              <p class="muted">Auto-assign Common → Mythic and overlay foil styles.</p>
-              <div class="metric-grid">
-                <div class="metric-card">
-                  <div class="metric-label">Common / Rare / Epic / Legendary / Mythic</div>
-                  <div class="metric-value" id="forge-rarity-dist">–</div>
-                  <div class="metric-sub">Balanced distribution based on image count.</div>
-                </div>
-                <div class="metric-card">
-                  <div class="metric-label">Foil styles</div>
-                  <div class="metric-value">Base Shine · Toxic · Neon Prism</div>
-                  <div class="metric-sub">Pick exact style in Deploy Center.</div>
-                </div>
-              </div>
-              <div class="button-row">
-                <button class="btn-primary" id="btn-generate-rarity">Generate Rarity</button>
-                <button class="btn-ghost" id="btn-generate-foil">Preview Foils</button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="section">
-          <button class="section-header" type="button">
-            <span>Chain & markets</span>
-            <span class="section-chevron">▾</span>
-          </button>
-          <div class="section-body">
-            <div class="panel">
-              <h3>Step 3 — Series Config</h3>
-              <div class="metric-grid">
-                <div class="metric-card">
-                  <div class="metric-label">Series name</div>
-                  <div class="metric-value">SpawnEngine Packs · TL2 · Foil Realms (mock)</div>
-                  <div class="metric-sub">You choose final names in Deploy Center.</div>
-                </div>
-                <div class="metric-card">
-                  <div class="metric-label">Chain / venues</div>
-                  <div class="metric-value">Base · Vibe · Zora-ready</div>
-                  <div class="metric-sub">Same contracts, multiple frontends.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </section>
 
-      <!-- Pull Lab -->
-      <section class="view" id="view-pulllab">
+      <!-- Pull Lab / Luck -->
+      <section class="view screen" id="view-luck">
         <div class="view-header">
           <h2>Pull Lab <span class="tag">Luck Engine</span></h2>
-          <p>Track luckiest pulls, cursed streaks & pack entropy per wallet.</p>
+          <p>Rough simulation of your pull luck (mock data).</p>
         </div>
 
-        <section class="section open">
+        <div class="section open">
           <button class="section-header" type="button">
-            <span>Luck meter & streaks</span>
-            <span class="section-chevron">▾</span>
+            <span>Luck meter</span>
+            <span class="toggle-icon">▾</span>
           </button>
-          <div class="section-body">
+          <div class="section-content">
             <div class="panel">
               <h3>Luck Meter</h3>
-              <p class="muted">Live simulation of your “pull luck” (mock until real onchain feed).</p>
+              <p class="muted">Fake entropy until onchain feed is wired.</p>
               <div class="luck-meter">
                 <div class="luck-fill" id="luck-fill"></div>
               </div>
-              <div class="metric-sub" id="luck-label">Luck: –</div>
+              <div class="metric-sub">Value updates on load.</div>
             </div>
           </div>
-        </section>
-
-        <section class="section">
-          <button class="section-header" type="button">
-            <span>Luckiest & unluckiest</span>
-            <span class="section-chevron">▾</span>
-          </button>
-          <div class="section-body">
-            <div class="panel">
-              <h3>Luckiest Pulls</h3>
-              <table class="stats-table" id="table-luckiest"></table>
-            </div>
-
-            <div class="panel">
-              <h3>Unlucky Survivors</h3>
-              <table class="stats-table" id="table-unlucky"></table>
-            </div>
-          </div>
-        </section>
-      </section>
-
-      <!-- Pack Maps -->
-      <section class="view" id="view-maps">
-        <div class="view-header">
-          <h2>Pack Maps <span class="tag">Bubble View</span></h2>
-          <p>Visualise packs, creators and whales as connected bubbles.</p>
         </div>
-
-        <section class="section open">
-          <button class="section-header" type="button">
-            <span>Creator / pack bubble mesh</span>
-            <span class="section-chevron">▾</span>
-          </button>
-          <div class="section-body">
-            <canvas id="pack-map-canvas"></canvas>
-            <p class="metric-sub muted">
-              Bubble map is mock – future: real nodes from Wield + onchain activity.
-            </p>
-          </div>
-        </section>
-      </section>
-
-      <!-- Warp Verified -->
-      <section class="view" id="view-verified">
-        <div class="view-header">
-          <h2>Warp Verified</h2>
-          <p>Triple verification via X, Farcaster & Base onchain history.</p>
-        </div>
-
-        <section class="section open">
-          <button class="section-header" type="button">
-            <span>Linked identities</span>
-            <span class="section-chevron">▾</span>
-          </button>
-          <div class="section-body">
-            <div class="metric-grid" id="verified-grid"></div>
-          </div>
-        </section>
-
-        <section class="section">
-          <button class="section-header" type="button">
-            <span>Verification actions</span>
-            <span class="section-chevron">▾</span>
-          </button>
-          <div class="section-body">
-            <div class="panel">
-              <h3>Connect social & onchain</h3>
-              <div class="button-row">
-                <button class="btn-primary" id="btn-verify-x">Link X</button>
-                <button class="btn-primary" id="btn-verify-fc">Link Farcaster</button>
-                <button class="btn-primary" id="btn-verify-base">Link Base App</button>
-              </div>
-            </div>
-          </div>
-        </section>
       </section>
 
       <!-- Chat -->
-      <section class="view" id="view-chat">
+      <section class="view screen" id="view-chat">
         <div class="view-header">
           <h2>Wallet Bubbles / Chat</h2>
-          <p>Planned feature – wallet-to-wallet chat between collectors.</p>
+          <p>Local-only mock chat between collectors.</p>
         </div>
 
-        <section class="section open">
+        <div class="section open">
           <button class="section-header" type="button">
-            <span>Live bubbles & DM mock</span>
-            <span class="section-chevron">▾</span>
+            <span>DM mock</span>
+            <span class="toggle-icon">▾</span>
           </button>
-          <div class="section-body">
-            <div class="bubble-layout">
-              <div class="bubble-column">
-                <div class="wallet-bubble">
-                  <div class="wallet-id">0xfeet…sn1ff</div>
-                  <div class="msg-text">“Just pulled a Legendary Foil Realms…”</div>
-                </div>
-                <div class="wallet-bubble">
-                  <div class="wallet-id">0x1234…abcd</div>
-                  <div class="msg-text">“Buying any sealed SpawnEngine packs under $5.”</div>
-                </div>
+          <div class="section-content">
+            <div class="panel">
+              <h3>Local Chat</h3>
+              <div id="chat-messages"
+                   class="chat-messages"
+                   style="min-height: 120px; max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px;">
               </div>
-              <div class="bubble-column">
-                <div class="chat-panel">
-                  <div class="chat-messages" id="chat-messages"></div>
-                  <div class="chat-input-row">
-                    <input id="chat-input" placeholder="DM a wallet directly… (local mock)" />
-                    <button class="btn-mini" id="chat-send">Send</button>
-                  </div>
-                </div>
+              <div class="chat-input-row" style="display: flex; gap: 6px; margin-top: 8px;">
+                <input id="chat-input"
+                       placeholder="DM a wallet... (local only)"
+                       style="flex: 1; padding: 6px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.16); background: rgba(5,4,16,0.95); color: #fefefe; font-size: 0.8rem;" />
+                <button class="btn-mini" id="chat-send">Send</button>
               </div>
             </div>
           </div>
-        </section>
-      </section>
-
-      <!-- Stats -->
-      <section class="view" id="view-stats">
-        <div class="view-header">
-          <h2>Stats Engine</h2>
-          <p>Wallet rarity heatmaps, whales, XP & most active packs (mocked for now).</p>
         </div>
-
-        <section class="section open">
-          <button class="section-header" type="button">
-            <span>Global stats overview</span>
-            <span class="section-chevron">▾</span>
-          </button>
-          <div class="section-body">
-            <div class="metric-grid" id="stats-metrics"></div>
-          </div>
-        </section>
-
-        <section class="section">
-          <button class="section-header" type="button">
-            <span>Top wallets</span>
-            <span class="section-chevron">▾</span>
-          </button>
-          <div class="section-body">
-            <div class="panel">
-              <h3>Top Wallets by Pull Score</h3>
-              <table class="stats-table" id="stats-top-wallets"></table>
-            </div>
-          </div>
-        </section>
-      </section>
-
-      <!-- Deploy Center -->
-      <section class="view" id="view-deploy">
-        <div class="view-header">
-          <h2>Deploy Center <span class="tag">Contracts</span></h2>
-          <p>Four deploy modes: Vibe-style pack NFTs, reward tokens, lootboxes & access NFTs.</p>
-        </div>
-
-        <section class="section open">
-          <button class="section-header" type="button">
-            <span>Deploy modes</span>
-            <span class="section-chevron">▾</span>
-          </button>
-          <div class="section-body">
-            <div class="card-grid compact" id="deploy-grid"></div>
-          </div>
-        </section>
-
-        <section class="section">
-          <button class="section-header" type="button">
-            <span>Next steps</span>
-            <span class="section-chevron">▾</span>
-          </button>
-          <div class="section-body">
-            <div class="panel">
-              <h3>Wiring to real contracts</h3>
-              <p class="muted">
-                Once Hardhat scripts are set, these buttons connect directly to your
-                PackFactory + TokenPackSeries (Base Sepolia → Base mainnet).
-              </p>
-            </div>
-          </div>
-        </section>
-      </section>
-
-      <!-- Settings -->
-      <section class="view" id="view-settings">
-        <div class="view-header">
-          <h2>Settings</h2>
-          <p>Wallet, API proxy & theme. Clean control center for the hub.</p>
-        </div>
-
-        <section class="section open">
-          <button class="section-header" type="button">
-            <span>Wallet & connection</span>
-            <span class="section-chevron">▾</span>
-          </button>
-          <div class="section-body">
-            <div class="panel">
-              <h3>Wallet</h3>
-              <p class="muted">Status: <span id="settings-wallet">Not connected.</span></p>
-              <div class="button-row">
-                <button class="btn-primary" id="btn-settings-connect">Connect / Switch</button>
-                <button class="btn-ghost" id="btn-settings-disconnect">Disconnect</button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="section">
-          <button class="section-header" type="button">
-            <span>Theme</span>
-            <span class="section-chevron">▾</span>
-          </button>
-          <div class="section-body">
-            <div class="panel">
-              <h3>Theme</h3>
-              <p class="muted">Dark mode is default. Light will become editor mode later.</p>
-              <div class="theme-preview-row">
-                <div class="theme-preview theme-dark active" data-theme="dark">
-                  Dark · Neon Spawn
-                </div>
-                <div class="theme-preview disabled" data-theme="light">
-                  Light · Creator Mode (coming soon)
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
       </section>
     </div>
 
+    <!-- Footer -->
     <footer class="app-footer">
       Built with <span class="spawn-spark">SpawnEngine</span> · Onchain Pack Hub ·
-      Ready for Vibe · Zora · Farcaster · The Base App
+      Ready for Vibe · Zora · Farcaster · Base
     </footer>
   </div>
 
