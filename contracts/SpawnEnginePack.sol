@@ -4,11 +4,20 @@ pragma solidity ^0.8.20;
 /*
     SpawnEngine — Multi-Pack NFT Logic
     ----------------------------------
-    This contract is designed to plug into your existing system
-    (PackFactory.sol, TokenPackSeries.sol, UtilityPackRouter.sol, etc)
-    without replacing or conflicting with anything.
+    Clean and stable version for OpenZeppelin v5.
 
-    Classic ERC721-style mint + simple pack logic.
+    This contract is designed to integrate smoothly with:
+    - PackFactory.sol
+    - TokenPackSeries.sol
+    - UtilityPackRouter.sol
+    - ReserveGuard.sol
+    - Lootbox1155.sol
+
+    Core features:
+    - Add card types
+    - Mint NFT when opening a pack
+    - Pick card type via simple deterministic RNG
+    - tokenURI uses OZ v5-compliant _requireOwned()
 */
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
@@ -30,7 +39,7 @@ contract SpawnEnginePack is ERC721, Ownable {
     event CardTypeAdded(uint256 indexed id, string name, uint256 rarity);
     event PackOpened(address indexed user, uint256 indexed tokenId, uint256 cardTypeId);
 
-    constructor() ERC721("SpawnEngine Pack", "SPAWNPACK") {}
+    constructor() ERC721("SpawnEngine Pack", "SPAWNPACK") Ownable(msg.sender) {}
 
     // ---------------------------------------------------------
     //  ADMIN: Add new card types
@@ -56,24 +65,38 @@ contract SpawnEnginePack is ERC721, Ownable {
         uint256 tokenId = nextTokenId;
         nextTokenId++;
 
-        // mint NFT to user
         _mint(msg.sender, tokenId);
 
-        // super simple RNG
-        cardTypeId = ((block.timestamp + tokenId + msg.sender.balance) % cardTypeCount) + 1;
+        // Simple deterministic RNG
+        cardTypeId = (
+            uint256(
+                keccak256(
+                    abi.encodePacked(
+                        block.timestamp,
+                        msg.sender,
+                        tokenId,
+                        block.prevrandao
+                    )
+                )
+            ) % cardTypeCount
+        ) + 1;
 
         emit PackOpened(msg.sender, tokenId, cardTypeId);
         return cardTypeId;
     }
 
     // ---------------------------------------------------------
-    //  VIEW: return metadata of chosen card type
+    //  VIEW: Metadata by tokenId
     // ---------------------------------------------------------
-    function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        require(_exists(tokenId), "Invalid token");
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override
+        returns (string memory)
+    {
+        _requireOwned(tokenId);  // OpenZeppelin v5-compliant
 
-        // This always returns the metadata of the card type the pack landed on.
-        // You can upgrade the logic later if you need dynamic metadata.
+        // Example: bucket token IDs to card types
         uint256 typeId = tokenId % cardTypeCount;
         if (typeId == 0) typeId = 1;
 
